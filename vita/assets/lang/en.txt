@@ -1,0 +1,1076 @@
+# Area Play - English translation
+# Format: each French text (exactly as in the code) on one line, its translation on the next line.
+# Blank lines and lines starting with # are ignored. %d, %s, %u... must stay in the same order.
+# To add a language: copy this file as <code>.txt (e.g. es.txt), change @name, translate the 2nd lines,
+# and put it in assets/lang/ (before compiling) or ux0:data/AreaPlay/lang/ (on the console).
+@name English
+
+# ---- Menu, pages, footer ----
+Accueil
+Home
+
+Jeux
+Games
+
+JEUX
+GAMES
+
+Collections
+Collections
+
+COLLECTIONS
+COLLECTIONS
+
+Favoris
+Favorites
+
+FAVORIS
+FAVORITES
+
+Homebrews
+Homebrews
+
+HOMEBREWS
+HOMEBREWS
+
+Réglages
+Settings
+
+RÉGLAGES
+SETTINGS
+
+Recherche
+Search
+
+RECHERCHE
+SEARCH
+
+APERÇU
+OVERVIEW
+
+TA COLLECTION
+YOUR COLLECTION
+
+Quitter
+Quit
+
+Ouvrir
+Open
+
+OUVRIR
+OPEN
+
+Changer
+Change
+
+Lancer
+Launch
+
+Retour
+Back
+
+Menu
+Menu
+
+Affichage
+View
+
+Déplacer
+Move
+
+Terminer
+Done
+
+Détails
+Info
+
+Image
+Image
+
+Options
+Options
+
+Retirer
+Remove
+
+Ajouter
+Add
+
+un système
+a system
+
+POUR PARCOURIR
+TO BROWSE
+
+REPRENDRE
+RESUME
+
+Récemment joués
+Recently played
+
+Lancer le jeu
+Launch game
+
+Applications installées
+Installed applications
+
+AFFICHAGE : CARROUSEL
+VIEW: CAROUSEL
+
+AFFICHAGE : GRILLE
+VIEW: GRID
+
+AFFICHAGE : LISTE
+VIEW: LIST
+
+Choisis un système
+Choose a system
+
+Tes collections
+Your collections
+
+Regroupe tes jeux comme tu veux (GTA, Rétro, À finir...).
+Group your games however you like (GTA, Retro, To finish...).
+
+Crée une collection ici, puis SELECT sur un jeu > Collections.
+Create a collection here, then SELECT on a game > Collections.
+
+# ---- Empty pages ----
+Aucune application trouvée
+No application found
+
+Installe des jeux ou des homebrews, ils apparaîtront ici.
+Install games or homebrews, they will appear here.
+
+Aucun homebrew installé
+No homebrew installed
+
+Les applications installées apparaîtront ici.
+Installed applications will appear here.
+
+Aucun favori
+No favorites
+
+Ajoute un jeu en favori depuis ses options.
+Add a game to your favorites from its options.
+
+Aucun jeu trouvé
+No game found
+
+Tape le nom d'un jeu
+Type a game name
+
+X sur « Recherche » dans le menu de gauche pour chercher.
+Press X on the search box at the top to search.
+
+Aucun jeu dans « %s »
+No games in "%s"
+
+Ajoute un jeu avec SELECT > Collections.
+Add a game with SELECT > Collections.
+
+Aucun jeu PS Vita installé
+No PS Vita game installed
+
+Les jeux installés apparaîtront ici.
+Installed games will appear here.
+
+Aucun jeu PSP trouvé
+No PSP game found
+
+Un jeu PSP ou PS1 doit avoir sa bulle sur l'écran d'accueil.
+A PSP or PS1 game needs its bubble on the home screen.
+
+Range un jeu ici avec SELECT > Catégorie.
+Move a game here with SELECT > Category.
+
+# ---- Game cards, details ----
+JEU PS VITA
+PS VITA GAME
+
+JEU PSP
+PSP GAME
+
+HOMEBREW
+HOMEBREW
+
+FAVORI
+FAVORITE
+
+Favori
+Favorite
+
+Jeu PS Vita
+PS Vita game
+
+Jeu PSP
+PSP game
+
+Homebrew
+Homebrew
+
+Jeu
+Game
+
+Identifiant
+ID
+
+Lancements
+Launches
+
+%u lancement
+%u launch
+
+%u lancements
+%u launches
+
+Temps de jeu (estimé)
+Play time (estimated)
+
+Durée moyenne
+Average session
+
+Dernière partie
+Last played
+
+Premier lancement
+First launch
+
+Jamais lancé
+Never played
+
+à l'instant
+just now
+
+il y a %d min
+%d min ago
+
+il y a %d h
+%d h ago
+
+il y a %d jour
+%d day ago
+
+il y a %d jours
+%d days ago
+
+il y a %d mois
+%d months ago
+
+< 1 min
+< 1 min
+
+BIBLIOTHÈQUE
+LIBRARY
+
+Aucun jeu
+No games
+
+%d jeu
+%d game
+
+%d jeux
+%d games
+
+Vide
+Empty
+
+%d collection
+%d collection
+
+%d collections
+%d collections
+
+X Lancer;O Fermer;T Fermer
+X Launch;O Close;T Close
+
+# ---- Game options (SELECT) ----
+Jouer
+Play
+
+Catégorie
+Category
+
+Renommer...
+Rename...
+
+Renommer
+Rename
+
+Choisir la jaquette...
+Choose cover...
+
+Autre version de la jaquette...
+Other cover version...
+
+Choisir le fond...
+Choose background...
+
+Télécharger jaquette et fond
+Download cover and background
+
+Masquer ce jeu
+Hide this game
+
+Fermer
+Close
+
+Oui
+Yes
+
+Non
+No
+
+Aucun
+None
+
+Aucune
+None
+
+Pas d'options pour cet élément
+No options for this item
+
+Jeu masqué (Réglages > Jeux masqués)
+Game hidden (Settings > Hidden games)
+
+Jeu renommé
+Game renamed
+
+Nom d'origine rétabli
+Original name restored
+
+Renommer le jeu
+Rename game
+
+Vide = nom d'origine
+Empty = original name
+
+# ---- Keyboard, search ----
+Espace
+Space
+
+OK
+OK
+
+Rechercher un jeu...
+Search for a game...
+
+Rechercher
+Search
+
+Résultats
+Results
+
+Tape le nom d'un jeu :
+Type a game name:
+
+les résultats s'affichent ici.
+results appear here.
+
+Aucun jeu ne correspond à « %s »
+No game matches "%s"
+
+X Sélectionner;S Effacer;T Espace;O Annuler;L Maj.;E Tout effacer
+X Select;S Delete;T Space;O Cancel;L Shift;E Clear all
+X Sélectionner;S Effacer;T Espace;O Annuler;C Curseur;E Tout effacer
+X Select;S Delete;T Space;O Cancel;C Cursor;E Clear all
+
+X Détails;O Clavier
+X Info;O Keyboard
+
+Tape un nom...
+Type a name...
+
+Nom du système
+System name
+
+Nom de la collection
+Collection name
+
+Renommer la collection
+Rename collection
+
+# ---- Collections ----
+Nouvelle collection...
+New collection...
+
+Nouvelle
+New
+
+Collection créée : %s
+Collection created: %s
+
+Collection renommée
+Collection renamed
+
+Collection supprimée
+Collection deleted
+
+Supprimer la collection
+Delete collection
+
+Supprimer la collection ?
+Delete the collection?
+
+« %s » sera supprimée.
+"%s" will be deleted.
+
+Les jeux restent dans leur système.
+Games stay in their system.
+
+Ajouté à « %s »
+Added to "%s"
+
+Retiré de « %s »
+Removed from "%s"
+
+Nombre maximum de collections atteint (%d)
+Maximum number of collections reached (%d)
+
+X Cocher / décocher;O Fermer
+X Check / uncheck;O Close
+
+X Valider;O Fermer
+X Confirm;O Close
+
+Nom vide ou déjà utilisé
+Empty or already used name
+
+# ---- Systems ----
+Systèmes
+Systems
+
+Nouveau système...
+New system...
+
+Retirer : %s
+Remove: %s
+
+Rien à ajouter ni à retirer
+Nothing to add or remove
+
+Système ajouté : %s
+System added: %s
+
+Système retiré
+System removed
+
+Nombre maximum de systèmes atteint
+Maximum number of systems reached
+
+Retirer le système ?
+Remove the system?
+
+« %s » sera retiré.
+"%s" will be removed.
+
+Ses jeux retournent dans leur catégorie.
+Its games go back to their category.
+
+PS Vita et PSP ne peuvent pas être retirés
+PS Vita and PSP cannot be removed
+
+Ordre des systèmes enregistré
+System order saved
+
+Gauche / Droite : déplacer   X : terminer
+Left / Right: move   X: done
+
+Émulateurs
+Emulators
+
+Rétro
+Retro
+
+Outils
+Tools
+
+OUTILS
+TOOLS
+
+Autres
+Others
+
+AUTRES
+OTHERS
+
+# ---- Confirmations ----
+Retour à la LiveArea
+Back to LiveArea
+
+Tu vas quitter Area Play et revenir
+You are about to quit Area Play and return
+
+au menu principal de la PS Vita.
+to the PS Vita home screen.
+
+Supprimer la bibliothèque ?
+Delete the library?
+
+La liste mémorisée sera effacée.
+The saved list will be erased.
+
+Images, catégories et réglages conservés.
+Images, categories and settings are kept.
+
+Annuler
+Cancel
+
+Confirmer
+Confirm
+
+Bibliothèque supprimée
+Library deleted
+
+Bibliothèque supprimée : lance « Scanner la bibliothèque ».
+Library deleted: run "Scan library".
+
+# ---- Hidden games ----
+Jeux masqués
+Hidden games
+
+Aucun jeu masqué.
+No hidden game.
+
+Masque un jeu avec SELECT > Masquer ce jeu.
+Hide a game with SELECT > Hide this game.
+
+%d jeu masqué
+%d hidden game
+
+%d jeux masqués
+%d hidden games
+
+X Réafficher;S Tout réafficher;O Fermer
+X Show;S Show all;O Close
+
+Jeu réaffiché
+Game shown again
+
+Tous les jeux sont réaffichés
+All games are shown again
+
+# ---- Settings ----
+Thème
+Theme
+
+Bibliothèque
+Library
+
+Langue / Language
+Language / Langue
+
+Langue, vue des jeux, tuiles, identifiant, jeux masqués, tri, performances
+Language, game view, tiles, ID, hidden games, sorting, performance
+
+Thème, couleur d'accent, fond d'écran, fond dynamique, reflets
+Theme, accent color, wallpaper, dynamic background, reflections
+
+Scanner, émulateurs (RetroArch), jaquettes et fonds, supprimer
+Scan, emulators (RetroArch), covers and backgrounds, delete
+
+Images (ux0:data/AreaPlay) : covers, backgrounds, systems, icons   (SELECT : choisir)
+Images (ux0:data/AreaPlay): covers, backgrounds, systems, icons   (SELECT: choose)
+
+Fonds d'écran : ux0:data/AreaPlay/wallpapers   (PNG ou JPG, 960 x 544)
+Wallpapers: ux0:data/AreaPlay/wallpapers   (PNG or JPG, 960 x 544)
+
+Fond dynamique
+Dynamic background
+
+Cadres glossy
+Glossy frames
+
+Couleur d'accent
+Accent color
+
+Affichage des jeux
+Game view
+
+Afficher l'identifiant
+Show ID
+
+Scanner la bibliothèque
+Scan library
+
+Supprimer la bibliothèque
+Delete library
+
+Tri des jeux
+Game sorting
+
+Télécharger jaquettes et fonds
+Download covers and backgrounds
+
+Tuiles des systèmes
+System tiles
+
+Fond d'écran
+Wallpaper
+
+Voile sur le fond d'écran
+Wallpaper dimming
+
+Anticrénelage (au redémarrage)
+Anti-aliasing (on restart)
+
+Compteur d'images (FPS)
+Frame counter (FPS)
+
+Fond des jeux sans image LiveArea
+Background of games without LiveArea image
+
+Sons de navigation
+Navigation sounds
+
+Région des jaquettes
+Cover region
+
+Appuie sur X
+Press X
+
+Image agrandie
+Enlarged image
+
+Jaquette
+Cover
+
+Uni
+Plain
+
+L'anticrénelage changera au prochain démarrage de Area Play.
+Anti-aliasing will change the next time Area Play starts.
+
+Affichage : %s
+View: %s
+
+Fond : jaquette
+Background: cover
+
+Fond : uni
+Background: plain
+
+Carrousel
+Carousel
+
+Grille
+Grid
+
+Liste
+List
+
+Récents
+Recent
+
+Favoris d'abord
+Favorites first
+
+3 par ligne
+3 per row
+
+4 par ligne
+4 per row
+
+2 lignes
+2 rows
+
+Léger
+Light
+
+Moyen
+Medium
+
+Fort
+Strong
+
+Faibles
+Quiet
+
+Moyens
+Medium
+
+Forts
+Loud
+
+Sombre
+Dark
+
+Clair
+Light
+
+Braise
+Ember
+
+Forêt
+Forest
+
+Japon
+Japan
+
+# ---- Accent colors ----
+Violet
+Purple
+
+Bleu clair
+Light blue
+
+Bleu foncé
+Dark blue
+
+Gris
+Grey
+
+Rouge
+Red
+
+Jaune
+Yellow
+
+Blanc
+White
+
+Noir
+Black
+
+Vert clair
+Light green
+
+Vert foncé
+Dark green
+
+Kaki
+Khaki
+
+Rose
+Pink
+
+Lavande
+Lavender
+
+Menthe
+Mint
+
+Citron vert
+Lime
+
+Or
+Gold
+
+Corail
+Coral
+
+Cuivre
+Copper
+
+Sable
+Sand
+
+Ardoise
+Slate
+
+# ---- Wallpapers, image picker ----
+Aucun (fond du thème)
+None (theme background)
+
+Fond du thème
+Theme background
+
+Fond du thème rétabli
+Theme background restored
+
+Fond d'écran appliqué
+Wallpaper applied
+
+Ajoute tes images (PNG / JPG) dans :
+Add your images (PNG / JPG) to:
+
+Voile réglable dans Thème > Voile
+Dimming can be set in Theme > Dimming
+
+X Appliquer;O Annuler;L Page préc.;R Page suiv.
+X Apply;O Cancel;L Prev. page;R Next page
+
+Image du système
+System image
+
+Fond du jeu
+Game background
+
+Jaquette du jeu
+Game cover
+
+Image d'origine
+Original image
+
+Image d'origine rétablie
+Original image restored
+
+Image appliquée
+Image applied
+
+Aucune image trouvée.
+No image found.
+
+Copie des PNG ou JPG dans
+Copy PNG or JPG files to
+
+Chargement...
+Loading...
+
+X Appliquer;O Annuler;. Haut / Bas : choisir
+X Apply;O Cancel;. Up / Down: choose
+
+# ---- Emulators ----
+Aucun émulateur installé (RetroArch, Emu4Vita++, DaedalusX64...)
+No emulator installed (RetroArch, Emu4Vita++, DaedalusX64...)
+
+%d cœur ou émulateur · jeux dans ux0:roms/<système>
+%d core or emulator · games in ux0:roms/<system>
+
+%d cœurs ou émulateurs · jeux dans ux0:roms/<système>
+%d cores or emulators · games in ux0:roms/<system>
+
+Aucun système ajouté.
+No system added.
+
+Crée d'abord un système : Jeux > Ajouter un système.
+First create a system: Games > Add a system.
+
+%s · Cœur
+%s · Core
+
+%s · Dossier
+%s · Folder
+
+Auto : %s
+Auto: %s
+
+Auto : créer ux0:roms/%s
+Auto: create ux0:roms/%s
+
+. Gauche / Droite : changer;T Cœurs adaptés;O Fermer (relit les jeux)
+. Left / Right: change;T Matching cores;O Close (rescans games)
+
+. Gauche / Droite : changer;T Tous les cœurs;O Fermer (relit les jeux)
+. Left / Right: change;T All cores;O Close (rescans games)
+
+Choisis un cœur : Réglages > Bibliothèque
+Choose a core: Settings > Library
+
+Cœur absent : %s
+Core missing: %s
+
+%s n'est pas installé
+%s is not installed
+
+RetroArch n'est pas installé
+RetroArch is not installed
+
+Emu4Vita++ n'est pas installé
+Emu4Vita++ is not installed
+
+Jeu introuvable
+Game not found
+
+Système retiré : relance le scan
+System removed: run the scan again
+
+Jeu de démonstration : rien à lancer
+Demo game: nothing to launch
+
+Lancement refusé (0x%08X)
+Launch refused (0x%08X)
+
+# ---- Library, scan ----
+Lecture de la bibliothèque...
+Reading library...
+
+Préparation des images...
+Preparing images...
+
+Accès à ux0:app refusé (0x%08X) : mode unsafe requis
+Access to ux0:app denied (0x%08X): unsafe mode required
+
+Lecture de ux0:app refusée (0x%08X) : mode unsafe requis.
+Reading ux0:app denied (0x%08X): unsafe mode required.
+
+Aucune application trouvée (mode démo)
+No application found (demo mode)
+
+Aucune application trouvée : affichage de jeux de démonstration.
+No application found: showing demo games.
+
+%d Vita, %d PSP, %d homebrew trouvés
+%d Vita, %d PSP, %d homebrew found
+
+%d Vita, %d PSP, %d homebrews trouvés
+%d Vita, %d PSP, %d homebrews found
+
+%s : %d Vita, %d PSP, %d homebrew.%s
+%s: %d Vita, %d PSP, %d homebrew.%s
+
+%s : %d Vita, %d PSP, %d homebrews.%s
+%s: %d Vita, %d PSP, %d homebrews.%s
+
+%d icône manquante.
+%d missing icon.
+
+%d icônes manquantes.
+%d missing icons.
+
+ %d app. ignorée (max %d).
+ %d app ignored (max %d).
+
+ %d app. ignorées (max %d).
+ %d apps ignored (max %d).
+
+Bibliothèque pleine : %d application ignorée
+Library full: %d application ignored
+
+Bibliothèque pleine : %d applications ignorées
+Library full: %d applications ignored
+
+# ---- Downloads ----
+Téléchargement des jaquettes
+Downloading covers
+
+Téléchargement des jaquettes %d / %d
+Downloading covers %d / %d
+
+Recherche des images par nom
+Searching images by name
+
+O Annuler
+O Cancel
+
+Pas de source d'images pour ce type de jeu
+No image source for this type of game
+
+Toutes les images sont déjà là
+All images are already there
+
+Réseau indisponible (Wi-Fi activé ?)
+Network unavailable (is Wi-Fi on?)
+
+Connexion sécurisée refusée (%08X) : iTLS-Enso ? log.txt
+Secure connection refused (%08X): iTLS-Enso? log.txt
+
+Échec du téléchargement (réseau, code %08X)
+Download failed (network, code %08X)
+
+Jaquettes : %d, fonds : %d, échecs : %d
+Covers: %d, backgrounds: %d, failures: %d
+
+Autre version de la jaquette
+Other cover version
+
+Jaquette trouvée par l'identifiant du jeu : pas d'autre version
+Cover found by the game ID: no other version
+
+Téléchargement en cours : réessaie après
+Download in progress: try again later
+
+Recherche des versions sur libretro-thumbnails...
+Looking for versions on libretro-thumbnails...
+
+Téléchargement...
+Downloading...
+
+Échec (réseau ou serveur).
+Failed (network or server).
+
+Aucune version trouvée pour ce titre.
+No version found for this title.
+
+X Télécharger celle-ci;O Fermer
+X Download this one;O Close
+
+Jaquette remplacée
+Cover replaced
+
+# ---- Demo data ----
+ACTION
+ACTION
+
+AVENTURE
+ADVENTURE
+
+COURSE
+RACING
+
+UTILITAIRE
+UTILITY
+
+# A propos
+À propos
+About
+Version, crédits, licences
+Version, credits, licences
+Hub de jeux pour PS Vita
+Game hub for PS Vita
+Conçu, dessiné et testé par moi sur PS Vita, développé avec l'aide d'une IA.
+Designed, drawn and tested by me on PS Vita, developed with the help of an AI.
+Crédits
+Credits
+VitaSDK et vita2d (licence MIT)
+VitaSDK and vita2d (MIT licence)
+FreeType : portions © The FreeType Project (freetype.org)
+FreeType: portions © The FreeType Project (freetype.org)
+Police Inter de Rasmus Andersson (SIL Open Font License 1.1)
+Inter font by Rasmus Andersson (SIL Open Font License 1.1)
+Jaquettes : hexflow-covers (jimbob4000) et libretro-thumbnails
+Covers: hexflow-covers (jimbob4000) and libretro-thumbnails
+Inspiré de RetroFlow et HexFlow (aucun code repris)
+Inspired by RetroFlow and HexFlow (no code reused)
+Catalogue
+Catalogue
+AFFICHAGE : CATALOGUE
+VIEW: CATALOGUE
+Bulle « RetroFlow Adrenaline Launcher » absente (voir README)
+"RetroFlow Adrenaline Launcher" bubble missing (see README)
+Module AdrBubbleBooter absent (voir README)
+AdrBubbleBooter module missing (see README)
+Écriture de boot.bin impossible (0x%08X)
+Cannot write boot.bin (0x%08X)
+Noël
+Christmas
+Neige qui tombe
+Falling snow
+Passer au thème Noël ?
+Switch to the Christmas theme?
+Neige, houx et guirlande pour les fêtes.
+Snow, holly and lights for the holidays.
+Ton thème actuel reviendra après le 6 janvier.
+Your current theme comes back after January 6.
+Fin des fêtes : ton thème habituel est revenu
+Holidays are over: your usual theme is back
+Hiver (Noël) %d
+Winter (Christmas) %d
+Réseau
+Network
+État, adresse IP, test de connexion
+Status, IP address, connection test
+État
+Status
+Adresse IP
+IP address
+Tester la connexion
+Test the connection
+Aucune connexion
+No connection
+Connexion en cours...
+Connecting...
+Test en cours...
+Testing...
+OK (%u ms)
+OK (%u ms)
+Échec (code %d)
+Failed (code %d)
+Échec : pas de réponse
+Failed: no response
+Applis
+Apps
+APPLIS
+APPS
+Fond d'écran démarrage
+Startup wallpaper

@@ -1,0 +1,24 @@
+# Compile la Vita Edition a chaque envoi : le VPK est disponible dans l'onglet Actions (Artifacts).
+name: Build Vita Edition
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  vita:
+    runs-on: ubuntu-latest
+    container: vitasdk/vitasdk:latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        run: |
+          cmake -S vita -B vita/build -DCMAKE_TOOLCHAIN_FILE="$VITASDK/share/vita.toolchain.cmake"
+          cmake --build vita/build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AreaPlay-vpk
+          path: vita/build/AreaPlay.vpk
+          if-no-files-found: error

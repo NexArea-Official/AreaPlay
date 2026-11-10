@@ -1,0 +1,82 @@
+Area Play - icones remplacables
+==============================
+
+OU LES METTRE
+-------------
+- Avant la compilation : dans ce dossier (assets/icons/ du projet). Elles sont mises dans le VPK.
+- Sans recompiler : sur la console, dans ux0:data/AreaPlay/icons/ (prioritaire sur le VPK).
+Ordre de recherche : ux0:data/AreaPlay/icons/<nom>.png, puis assets/icons/<nom>.png,
+puis l'ancien nom (colonne de droite), sinon l'icone est dessinee par le programme.
+
+FORMAT
+------
+- PNG avec transparence. Dessin BLANC sur fond transparent : la couleur est ajoutee par le
+  theme (couleur d'accent quand l'element est selectionne, gris sinon).
+- Taille conseillee : 64 x 64 pixels (ou plus, carre de preference).
+- Le dessin doit occuper toute l'image, sans marge : l'icone est reduite pour que son plus grand
+  cote fasse 20 pixels a l'ecran (46 dans les fenetres de confirmation). Une image avec beaucoup
+  de vide autour parait petite.
+- Apres avoir ajoute ou change une icone : recompiler (assets/icons) ou relancer Area Play (ux0).
+
+NOM DU FICHIER          OU ELLE APPARAIT                                  ANCIEN NOM ACCEPTE
+--------------------    ----------------------------------------------    ------------------
+Menu de gauche
+menu_accueil.png        Accueil                                           home.png
+menu_recherche.png      Recherche                                         -
+menu_jeux.png           Jeux                                              games.png
+menu_collections.png    Collections                                       -
+menu_favoris.png        Favoris                                           -
+menu_homebrews.png      Homebrews                                         homebrew.png
+menu_reglages.png       Reglages                                          settings.png
+quitter.png             Quitter (et fenetre "Retour a la LiveArea")       -
+
+Reglages > Affichage
+affichage.png           Affichage des jeux                                ico_4.png
+tuiles_systemes.png     Tuiles des systemes                               -
+identifiant.png         Afficher l'identifiant                            ico_5.png
+jeux_masques.png        Jeux masques (aussi : SELECT > Masquer ce jeu)    ico_6.png
+tri.png                 Tri des jeux                                      ico_9.png
+sons.png                Sons de navigation                                -
+compteur_images.png     Compteur d'images (FPS)                           -
+anticrenelage.png       Anticrenelage                                     -
+
+Reglages > Theme
+theme.png               Theme (et groupe "Theme")                         ico_2.png
+couleur_accent.png      Couleur d'accent (sinon pastille de la couleur)   -
+fond_ecran.png          Fond d'ecran                                      -
+voile.png               Voile sur le fond d'ecran                         -
+fond_dynamique.png      Fond dynamique (aussi : SELECT > Choisir image)   ico_0.png
+fond_sans_image.png     Fond des jeux sans image LiveArea                 -
+cadres_glossy.png       Cadres glossy                                     ico_1.png
+
+Reglages > Bibliotheque
+bibliotheque.png        Groupe "Bibliotheque"                             ico_12.png
+scanner.png             Scanner la bibliotheque                           ico_7.png
+telecharger.png         Telecharger jaquettes et fonds                    ico_10.png
+supprimer.png           Supprimer (bibliotheque, collection)              ico_8.png
+
+Options d'un jeu (SELECT), fiches
+jouer.png               Jouer / nombre de lancements                      ico_13.png
+fermer.png              Fermer                                            ico_14.png
+temps_de_jeu.png        Temps de jeu                                      ico_15.png
+categorie.png           Categorie, Renommer                               ico_16.png
+collection.png          Collections (options, fiche, tuiles vides)        -
+recherche.png           (reserve : loupe)                                 -
+favori.png              Coeur plein (favori)                              -
+favori_vide.png         Coeur vide (option Favori desactivee)             -
+
+Boutons de la manette (aides en bas de l'ecran, fenetres)
+bouton_croix.png        X                                                 btn_cross.png
+bouton_rond.png         O                                                 btn_circle.png
+bouton_carre.png        Carre                                             btn_square.png
+bouton_triangle.png     Triangle                                          btn_triangle.png
+
+ICONES ACTUELLEMENT FOURNIES
+----------------------------
+Toutes les icones de la liste ci-dessus sont fournies dans ce dossier, sous leur NOUVEAU nom.
+Elles ont ete dessinees pour Area Play (meme licence que le code, PolyForm Noncommercial).
+Pour en changer une, remplace le fichier du meme nom (ou depose-le dans ux0:data/AreaPlay/icons/).
+
+SONS
+----
+Voir assets/sons/SONS.txt.

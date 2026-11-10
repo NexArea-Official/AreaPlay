@@ -1,0 +1,25 @@
+Area Play - sons de navigation remplacables
+==========================================
+
+OU LES METTRE
+-------------
+- Avant la compilation : dans ce dossier (assets/sons/ du projet). Ils sont mis dans le VPK.
+- Sans recompiler : sur la console, dans ux0:data/AreaPlay/sons/ (prioritaire sur le VPK).
+Sans fichier, Area Play joue ses propres sons (petits "tic" fabriques par le programme).
+
+NOM DU FICHIER       QUAND
+-----------------    ------------------------------------------------------------
+deplacement.wav      Changement de selection (croix directionnelle, stick, glisser)
+valider.wav          Touche X (ouvrir, valider, cocher...)
+retour.wav           Touche O quand on revient en arriere ou qu'on ferme une fenetre
+
+FORMAT
+------
+- WAV non compresse (PCM) 16 bits, mono ou stereo, n'importe quelle frequence
+  (44100 ou 48000 Hz conseilles). Converti automatiquement en mono 48 kHz.
+- Courts de preference (moins de 0,3 s) : un nouveau son coupe le precedent. 2 s au plus.
+- Un fichier illisible est signale dans ux0:data/AreaPlay/log.txt et le son d'origine est garde.
+
+VOLUME
+------
+Reglages > Affichage > Sons de navigation : Non / Faibles / Moyens / Forts.
