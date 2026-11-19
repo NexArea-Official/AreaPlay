@@ -88,6 +88,7 @@ static int net_start(void) {
     log_line(l);
     return 0;
   }
+  curl_global_init(CURL_GLOBAL_ALL); /* HTTPS par curl + OpenSSL : ne depend pas du SSL de la console */
   net_ok = 1;
   {
     SceDateTime d;
@@ -103,8 +104,6 @@ static int net_start(void) {
 /* Verification du certificat du serveur : la Vita ne connait pas toujours l'autorite de GitHub
  * (erreur 80431075). relax : 0 = verification complete, 1 = sans controle de l'autorite,
  * 2 = sans verification du certificat (les images recues sont de toute facon controlees : signature PNG). */
-extern int vf_https_dis_tpl(int, unsigned int) __asm__("sceHttpsDisableOption2");
-extern int vf_https_dis_req(int, unsigned int) __asm__("sceHttpsDisableOption");
 extern int vf_https_err(int, int *, unsigned int *) __asm__("sceHttpsGetSslError");
 extern int vf_https_cb(int, int (*)(unsigned int, void *const *, int, void *), void *) __asm__("sceHttpsSetSslCallback");
 static int ssl_accept_all(unsigned int verify, void *const *certs, int n, void *arg) { /* certificat inconnu de la Vita : on continue */
@@ -114,29 +113,84 @@ static int ssl_accept_all(unsigned int verify, void *const *certs, int n, void *
 static int ssl_relax;
 static char ssl_dbg[200];
 
+/* HTTPS par libcurl + OpenSSL (dans l'appli) : chiffrements modernes, sans iTLS-Enso ni le SSL de la console,
+ * qui echoue avec la plupart des serveurs actuels. Certificats : app0:assets/cacert.pem (liste de Mozilla). */
+typedef struct {
+  unsigned char *buf;
+  int cap, len;
+} CurlDst;
+static size_t curl_write(char *p, size_t sz, size_t n, void *ud) {
+  CurlDst *d = (CurlDst *)ud;
+  size_t t = sz * n;
+  if (dl_cancel && http_sink) return 0; /* annule : on n'attend pas la fin d'une longue liste */
+  if (http_sink) {
+    http_sink((const unsigned char *)p, (int)t);
+    d->len += (int)t;
+    return t;
+  }
+  size_t room = (size_t)(d->cap - d->len);
+  if (t > room) t = room; /* tampon plein : la suite est ignoree (comme avant) */
+  memcpy(d->buf + d->len, p, t);
+  d->len += (int)t;
+  return sz * n;
+}
+static int curl_get_buf(const char *url, unsigned char *buf, int cap, int *len_out) {
+  CURL *c = curl_easy_init();
+  if (!c) return -1;
+  CurlDst d = {buf, cap, 0};
+  char err[CURL_ERROR_SIZE];
+  err[0] = 0;
+  curl_easy_setopt(c, CURLOPT_URL, url);
+  curl_easy_setopt(c, CURLOPT_USERAGENT, VF_DATA_NAME "/2.2");
+  curl_easy_setopt(c, CURLOPT_FOLLOWLOCATION, 1L);
+  curl_easy_setopt(c, CURLOPT_MAXREDIRS, 5L);
+  curl_easy_setopt(c, CURLOPT_CAINFO, "app0:assets/cacert.pem");
+  curl_easy_setopt(c, CURLOPT_CONNECTTIMEOUT, 15L);
+  curl_easy_setopt(c, CURLOPT_LOW_SPEED_LIMIT, 1L);
+  curl_easy_setopt(c, CURLOPT_LOW_SPEED_TIME, 30L);
+  curl_easy_setopt(c, CURLOPT_NOSIGNAL, 1L);
+  curl_easy_setopt(c, CURLOPT_ERRORBUFFER, err);
+  curl_easy_setopt(c, CURLOPT_WRITEFUNCTION, curl_write);
+  curl_easy_setopt(c, CURLOPT_WRITEDATA, &d);
+  CURLcode r = curl_easy_perform(c);
+  long status = 0;
+  curl_easy_getinfo(c, CURLINFO_RESPONSE_CODE, &status);
+  curl_easy_cleanup(c);
+  if (r != CURLE_OK) {
+    snprintf(ssl_dbg, sizeof(ssl_dbg), "curl %d : %s", (int)r, err[0] ? err : curl_easy_strerror(r));
+    *len_out = 0;
+    return -1000 - (int)r; /* code negatif : -1000 - code curl */
+  }
+  ssl_dbg[0] = 0;
+  *len_out = status == 200 ? d.len : 0;
+  return (int)status;
+}
+
 /* Telecharge une URL dans buf (cap octets). Retourne le code HTTP (200...), ou un code d'erreur negatif.
  * Plusieurs fils peuvent l'appeler en meme temps, chacun avec son tampon (sans http_sink). */
 static int http_get_buf(const char *url, unsigned char *buf, int cap, int *len_out) {
   *len_out = 0;
+  if (!strncmp(url, "https://", 8)) return curl_get_buf(url, buf, cap, len_out);
   int tpl = sceHttpCreateTemplate(VF_DATA_NAME "/2.2", SCE_HTTP_VERSION_1_1, 1);
   if (tpl < 0) return tpl;
   int result = -1;
-  unsigned int ssl_flags = ssl_relax == 1 ? 0x10u : (ssl_relax >= 2 ? 0x1Fu : 0u);
-  int dis_t = ssl_flags ? vf_https_dis_tpl(tpl, ssl_flags) : 0, dis_r = 0;
+  /* Options globales du module (pas par requete) : 1 = sans controle de l'autorite ni des dates
+   * (SCE_HTTPS_FLAG_KNOWN_CA_CHECK 0x20, NOT_AFTER 0x08, NOT_BEFORE 0x10), 2 = sans verification du serveur (0x01). */
+  unsigned int ssl_flags = ssl_relax == 1 ? 0x38u : (ssl_relax >= 2 ? 0x39u : 0u);
+  int dis_t = ssl_flags ? sceHttpsDisableOption(ssl_flags) : sceHttpsEnableOption(0x39u), dis_r = 0;
   int cbr = ssl_relax >= 1 ? vf_https_cb(tpl, ssl_accept_all, NULL) : 0;
   ssl_dbg[0] = 0;
   int conn = sceHttpCreateConnectionWithURL(tpl, url, 0);
   if (conn >= 0) {
     int req = sceHttpCreateRequestWithURL(conn, SCE_HTTP_METHOD_GET, url, 0);
     if (req >= 0) {
-      if (ssl_flags) dis_r = vf_https_dis_req(req, ssl_flags);
       int r = sceHttpSendRequest(req, NULL, 0);
       if (r < 0) {
         result = r;
         int en = 0;
         unsigned int det = 0;
         int ge = vf_https_err(req, &en, &det);
-        snprintf(ssl_dbg, sizeof(ssl_dbg), "send=%08X ssl(get=%08X err=%08X detail=%08X) disable(tpl=%08X req=%08X flags=%02X) cb=%08X",
+        snprintf(ssl_dbg, sizeof(ssl_dbg), "send=%08X ssl(get=%08X err=%08X detail=%08X) options(%08X %08X flags=%02X) cb=%08X",
                  (unsigned)r, (unsigned)ge, (unsigned)en, det, (unsigned)dis_t, (unsigned)dis_r, ssl_flags, (unsigned)cbr);
       } else {
         int status = 0;
@@ -147,6 +201,7 @@ static int http_get_buf(const char *url, unsigned char *buf, int cap, int *len_o
           if (http_sink) { /* flux : liste de fichiers trop grande pour la memoire */
             static unsigned char tmp[4096];
             while ((n = sceHttpReadData(req, tmp, sizeof(tmp))) > 0) {
+              if (dl_cancel) break; /* annule : on n'attend pas la fin d'une longue liste */
               http_sink(tmp, n);
               len += n;
             }
@@ -571,7 +626,7 @@ static void dl_parallel(int pass) {
   for (int i = 1; i < DL_WORKERS; ++i) {
     bufs[n] = (unsigned char *)malloc(DL_BUF_SIZE);
     if (!bufs[n]) break;
-    th[n] = sceKernelCreateThread("vf_dlw", dl_worker, 0x10000100, 0x10000, 0, 0, NULL);
+    th[n] = sceKernelCreateThread("vf_dlw", dl_worker, 0x10000100, 0x20000, 0, 0, NULL);
     if (th[n] < 0 || sceKernelStartThread(th[n], sizeof(bufs[n]), &bufs[n]) < 0) {
       if (th[n] >= 0) sceKernelDeleteThread(th[n]);
       free(bufs[n]);
@@ -759,7 +814,12 @@ static void dl_add_job(const Game *g, int wc, int sys, int bg, int nc) {
   if (wc) dl_want_covers = 1;
 }
 static void dl_start(Game *one) {
-  if (dl_state == 1) return;
+  if (dl_state == 1) {
+    snprintf(toast_text, sizeof(toast_text), "%s",
+             L(dl_cancel ? "Arrêt du téléchargement en cours, réessaie dans un instant" : "Téléchargement déjà en cours"));
+    toast_time = 2.5f;
+    return;
+  }
   dl_n = dl_done = dl_applied = 0;
   dl_bg_n = dl_bg_done = dl_bg_applied = 0;
   dl_ok_count = dl_miss_count = dl_fail_count = 0;
@@ -813,7 +873,7 @@ static void dl_start(Game *one) {
   dl_open = 1;
   /* Plusieurs essais (priorite / pile) ; en dernier recours on telecharge sans fil separe. */
   static const int prios[3] = {0x10000100, 0x10000100, 0x40};
-  static const int stacks[3] = {0x10000, 0x8000, 0x20000};
+  static const int stacks[3] = {0x20000, 0x10000, 0x8000}; /* HTTPS (curl + OpenSSL) : grande pile */
   int started = 0;
   for (int t = 0; t < 3 && !started; ++t) {
     SceUID th = sceKernelCreateThread("vf_dl", dl_thread, prios[t], stacks[t], 0, 0, NULL);
@@ -831,7 +891,7 @@ static void dl_start(Game *one) {
 
 /* Chaque image : applique les jaquettes recues au fur et a mesure (au plus 2 par image affichee). */
 static void dl_poll(void) {
-  if (!dl_open) return;
+  if (!dl_open && dl_state == 0) return; /* fenetre fermee par Annuler : on finit d'appliquer en silence */
   int budget = 2;
   while (dl_applied < dl_done && budget > 0) {
     DlJob *j = &dl_jobs[dl_applied++];
@@ -874,12 +934,13 @@ static void dl_poll(void) {
     nameset_load(&bg_set, BG_DIR);
     dl_open = 0;
     dl_state = 0;
+    if (dl_cancel) return; /* annule : le message "Telechargement annule" est deja affiche */
     int okc = dl_ok_count + dl_art_ok[1], okb = dl_art_ok[0];
     int miss = dl_miss_count + dl_art_miss[0] + dl_art_miss[1];
     int fail = dl_fail_count + dl_art_fail[0] + dl_art_fail[1];
     if (okc == 0 && okb == 0 && fail > 0 && ((unsigned)dl_err == 0x80431075u || (unsigned)dl_err == 0x80435061u))
       /* le code est affiche : ces erreurs SSL ont plusieurs causes possibles (TLS, memoire, horloge) */
-      snprintf(toast_text, sizeof(toast_text), L("Connexion sécurisée refusée (%08X) : iTLS-Enso ? log.txt"), (unsigned)dl_err);
+      snprintf(toast_text, sizeof(toast_text), L("Connexion sécurisée refusée (%08X) : voir log.txt"), (unsigned)dl_err);
     else if (okc == 0 && okb == 0 && fail > 0)
       snprintf(toast_text, sizeof(toast_text), L("Échec du téléchargement (réseau, code %08X)"), (unsigned)dl_err);
     else
@@ -989,7 +1050,7 @@ static int alt_get_thread(SceSize args, void *argp) {
 }
 
 static void alt_run(SceKernelThreadEntry fn) { /* fil separe ; sinon tout de suite */
-  SceUID th = sceKernelCreateThread("vf_alt", fn, 0x10000100, 0x10000, 0, 0, NULL);
+  SceUID th = sceKernelCreateThread("vf_alt", fn, 0x10000100, 0x20000, 0, 0, NULL);
   if (th < 0 || sceKernelStartThread(th, 0, NULL) < 0) fn(0, NULL);
 }
 
@@ -1133,19 +1194,36 @@ static void net_ip_text(char *out, int n) {
   snprintf(out, n, "%s", info.ip_address);
 }
 
-/* Test : joint le serveur des jaquettes et mesure le temps de reponse (dans un fil a part). */
+/* Test : ce que l'appli utilise vraiment. Images = serveur des jaquettes (HTTP),
+ * mises a jour = depot GitHub (HTTPS par curl). Dans un fil a part. */
+#define NET_TEST_UPD "https://raw.githubusercontent.com/NexArea-Official/AreaPlay/main/README.md"
 static volatile int net_testing;
 static int net_test_thread(SceSize args, void *argp) {
   (void)args;
   (void)argp;
   static unsigned char tb[2048];
-  int len = 0;
-  unsigned long long t0 = sceKernelGetProcessTimeWide();
-  int code = net_start() ? http_get_buf("https://thumbnails.libretro.com/", tb, (int)sizeof(tb), &len) : -1;
-  unsigned ms = (unsigned)((sceKernelGetProcessTimeWide() - t0) / 1000ULL);
-  if (code >= 200 && code < 400) snprintf(net_test_msg, sizeof(net_test_msg), L("OK (%u ms)"), ms);
-  else if (code > 0) snprintf(net_test_msg, sizeof(net_test_msg), L("Échec (code %d)"), code);
-  else snprintf(net_test_msg, sizeof(net_test_msg), "%s", L("Échec : pas de réponse"));
+  int len = 0, img = -1, upd = -1;
+  unsigned ms_img = 0, ms_upd = 0;
+  if (net_start()) {
+    unsigned long long t0 = sceKernelGetProcessTimeWide();
+    img = http_get_buf("http://thumbnails.libretro.com/", tb, (int)sizeof(tb), &len);
+    unsigned long long t1 = sceKernelGetProcessTimeWide();
+    upd = http_get_buf(NET_TEST_UPD, tb, (int)sizeof(tb), &len);
+    ms_img = (unsigned)((t1 - t0) / 1000ULL);
+    ms_upd = (unsigned)((sceKernelGetProcessTimeWide() - t1) / 1000ULL);
+  }
+  {
+    char l[300];
+    snprintf(l, sizeof(l), "test connexion : images %d (%u ms), mises a jour %d (%u ms) %s", img, ms_img, upd, ms_upd,
+             upd == 200 ? "" : ssl_dbg);
+    log_line(l);
+  }
+  int ok_i = img >= 200 && img < 400, ok_u = upd == 200;
+  if (ok_i && ok_u) snprintf(net_test_msg, sizeof(net_test_msg), L("OK (images %u ms, mises à jour %u ms)"), ms_img, ms_upd);
+  else if (img < 0 && upd < 0) snprintf(net_test_msg, sizeof(net_test_msg), "%s", L("Échec : pas de réponse"));
+  else
+    snprintf(net_test_msg, sizeof(net_test_msg), "%s %s · %s %s", L("Images"), ok_i ? "OK" : L("échec"), L("Mises à jour"),
+             ok_u ? "OK" : L("échec"));
   net_testing = 0;
   sceKernelExitDeleteThread(0);
   return 0;
@@ -1154,7 +1232,7 @@ static void net_test_start(void) {
   if (net_testing) return;
   net_testing = 1;
   snprintf(net_test_msg, sizeof(net_test_msg), "%s", L("Test en cours..."));
-  SceUID th = sceKernelCreateThread("vf_nettest", net_test_thread, 0x10000100, 0x8000, 0, 0, NULL);
+  SceUID th = sceKernelCreateThread("vf_nettest", net_test_thread, 0x10000100, 0x20000, 0, 0, NULL);
   if (th < 0 || sceKernelStartThread(th, 0, NULL) < 0) {
     if (th >= 0) sceKernelDeleteThread(th);
     snprintf(net_test_msg, sizeof(net_test_msg), "%s", L("Échec : pas de réponse"));

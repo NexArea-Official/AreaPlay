@@ -16,7 +16,7 @@ static int settings_load_legacy(void) {
   if (n < 5) return 0;
   opt_backdrop = b[0] ? 1 : 0;
   opt_gloss = b[1] ? 1 : 0;
-  opt_theme = b[2] < THEME_COUNT ? b[2] : 0;
+  opt_theme = b[2] < BUILTIN_THEMES ? b[2] : 0;
   opt_accent = b[3] < ACCENT_COUNT ? b[3] : 0;
   opt_view = b[4] < VIEW_COUNT ? b[4] : 0;
   view_default = opt_view;
@@ -34,12 +34,13 @@ static struct {
   const char *key;
   int *val, max; /* valeurs acceptees : 0 .. max-1 */
 } settings_keys[] = {
-    {"fond_dynamique", &opt_backdrop, 2}, {"reflets", &opt_gloss, 2},       {"theme", &opt_theme, THEME_COUNT},
+    {"fond_dynamique", &opt_backdrop, 2}, {"reflets", &opt_gloss, 2},       {"theme", &opt_theme, 64},
     {"accent", &opt_accent, ACCENT_COUNT}, {"vue", &view_default, VIEW_COUNT}, {"identifiant", &opt_show_id, 2},
     {"tri", &opt_sort, 3},                 {"tuiles_systemes", &opt_sys_mode, 3}, {"voile_fond_ecran", &opt_wall_dim, 3},
     {"anticrenelage", &opt_msaa, 2},       {"compteur_images", &opt_fps, 2},
     {"fond_image_agrandie", &opt_bd_icon, 2}, {"sons", &opt_sound, 4}, {"region_jaquettes", &opt_region, 4},
-    {"neige", &opt_snow, 2}, {"fond_demarrage", &opt_splash_bg, 2},               {"noel_propose", &xmas_asked, 10000}, {"noel_theme_avant", &xmas_prev, 10000}};
+    {"neige", &opt_snow, 2}, {"retour_apres_jeu", &opt_return, 2},
+    {"maj_auto", &opt_upd_check, 2}, {"maj_installer_auto", &opt_upd_install, 2}, {"fond_demarrage", &opt_splash_bg, 2},               {"noel_propose", &xmas_asked, 10000}, {"noel_theme_avant", &xmas_prev, 10000}};
 
 static void settings_save(void) {
   char buf[2048];
@@ -105,12 +106,13 @@ static void change_setting(int row, int dir) {
   case SR_LANG: lang_set((lang_index() + dir + lang_count) % lang_count); break;
   case SR_MSAA: opt_msaa = !opt_msaa; break; /* pris en compte au prochain demarrage */
   case SR_SNOW: opt_snow = !opt_snow; break;
+  case SR_RETURN: return_toggle(); break;
+  case SR_UPD_AUTO: opt_upd_check = !opt_upd_check; break;
+  case SR_UPD_INSTALL: opt_upd_install = !opt_upd_install; break;
   case SR_SPLASH_BG: opt_splash_bg = !opt_splash_bg; break;
   case SR_THEME:
-    opt_theme = (opt_theme + dir + (int)THEME_COUNT) % (int)THEME_COUNT;
-    xmas_prev = 0; /* choisi a la main : il ne change plus tout seul apres Noel */
-    if (themes[opt_theme].accent >= 0) opt_accent = themes[opt_theme].accent;
-    break;
+    theme_set((opt_theme + dir + theme_count()) % theme_count(), 0); /* choisi a la main : il ne change plus tout seul */
+    return;
   case SR_ACCENT: opt_accent = (opt_accent + dir + (int)ACCENT_COUNT) % (int)ACCENT_COUNT; break;
   case SR_VIEW: /* meme vue pour tous les menus */
     view_default = (view_default + dir + VIEW_COUNT) % VIEW_COUNT;

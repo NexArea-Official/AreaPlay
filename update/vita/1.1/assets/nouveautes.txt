@@ -1,0 +1,40 @@
+# Area Play - Nouveautés de chaque version (Réglages > Système > Nouveautés)
+# Format : "= 1.1" pour une version (la plus récente en haut), puis une ligne par nouveauté :
+#   fr: texte en français
+#   en: text in English
+# Les lignes qui commencent par # sont ignorées. Ce fichier est livré avec l'appli (et avec chaque mise à jour) ;
+# publication/preparer_maj.py y reprend les lignes de la nouvelle version pour latest.txt.
+
+= 1.1
+fr: Mises à jour depuis l'appli : recherche au démarrage, notification, installation par Area Play Updater (installé par l'appli)
+fr: Installation automatique des mises à jour au choix, et nouveautés de chaque version (Réglages > Système)
+fr: Connexion sécurisée intégrée (curl + OpenSSL) : mises à jour et HTTPS sans iTLS-Enso, quel que soit le firmware
+fr: Menu rapide (START maintenu) : luminosité, volume, transfert Wi-Fi, veille, LiveArea, redémarrer, éteindre
+fr: Retour dans Area Play après un jeu, en option : plugin areaplay_return installé par l'appli (ligne ajoutée à config.txt, copie gardée)
+fr: Transfert Wi-Fi : depuis un PC ou un téléphone (adresse ou QR code), envoie jaquettes, fonds, icônes, jeux rétro et ISO PSP
+fr: Transfert Wi-Fi : rien n'est supprimé, les fichiers sont ajoutés ; seul un fichier du même nom (ou l'ancienne jaquette du jeu) est remplacé
+fr: Test de connexion : vérifie séparément le serveur des images et celui des mises à jour
+en: In-app updates: check at startup, notification, installation by Area Play Updater (installed by the app)
+en: Optional automatic update installation, and what's new for each version (Settings > System)
+en: Built-in secure connection (curl + OpenSSL): updates and HTTPS without iTLS-Enso, on any firmware
+en: Quick menu (hold START): brightness, volume, Wi-Fi transfer, sleep, LiveArea, restart, power off
+en: Optional return to Area Play after a game: areaplay_return plugin installed by the app (one line added to config.txt, backup kept)
+en: Wi-Fi transfer: from a PC or a phone (address or QR code), send covers, wallpapers, icons, retro games and PSP ISOs
+en: Wi-Fi transfer: nothing is deleted, files are added; only a file with the same name (or the game's old cover) is replaced
+en: Connection test: checks the image server and the update server separately
+
+= 1.0
+fr: Première version publique sous le nom Area Play
+fr: Jeux PS Vita, PSP, PS1, homebrews et consoles rétro réunis au même endroit
+fr: Jeux rétro lancés directement avec RetroArch, Emu4Vita++ ou des émulateurs autonomes
+fr: Jaquettes et fonds téléchargés automatiquement, région au choix
+fr: Thèmes (Noël avec la neige), 26 couleurs d'accent, fonds d'écran, sons et icônes remplaçables
+fr: Vues carrousel, grille, liste et catalogue ; favoris, collections, jeux récents, recherche
+fr: Écran tactile partout, français et anglais
+en: First public release under the Area Play name
+en: PS Vita, PSP, PS1 games, homebrews and retro systems in one place
+en: Retro games launched directly with RetroArch, Emu4Vita++ or standalone emulators
+en: Covers and backgrounds downloaded automatically, preferred region
+en: Themes (Christmas with falling snow), 26 accent colours, wallpapers, replaceable sounds and icons
+en: Carousel, grid, list and catalogue views; favourites, collections, recently played, search
+en: Touch screen everywhere, English and French

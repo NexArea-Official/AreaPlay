@@ -952,8 +952,8 @@ All images are already there
 Réseau indisponible (Wi-Fi activé ?)
 Network unavailable (is Wi-Fi on?)
 
-Connexion sécurisée refusée (%08X) : iTLS-Enso ? log.txt
-Secure connection refused (%08X): iTLS-Enso? log.txt
+Connexion sécurisée refusée (%08X) : voir log.txt
+Secure connection refused (%08X): see log.txt
 
 Échec du téléchargement (réseau, code %08X)
 Download failed (network, code %08X)
@@ -1006,8 +1006,8 @@ UTILITY
 About
 Version, crédits, licences
 Version, credits, licences
-Hub de jeux pour PS Vita
-Game hub for PS Vita
+Launcher de jeux pour PS Vita
+Game launcher for PS Vita
 Conçu, dessiné et testé par moi sur PS Vita, développé avec l'aide d'une IA.
 Designed, drawn and tested by me on PS Vita, developed with the help of an AI.
 Crédits
@@ -1034,18 +1034,14 @@ AdrBubbleBooter module missing (see README)
 Cannot write boot.bin (0x%08X)
 Noël
 Christmas
-Neige qui tombe
-Falling snow
-Passer au thème Noël ?
-Switch to the Christmas theme?
-Neige, houx et guirlande pour les fêtes.
-Snow, holly and lights for the holidays.
-Ton thème actuel reviendra après le 6 janvier.
-Your current theme comes back after January 6.
+Animation du thème
+Theme animation
+Passer au thème %s ?
+Switch to the %s theme?
+Ton thème actuel reviendra à la fin de la période.
+Your current theme comes back when it ends.
 Fin des fêtes : ton thème habituel est revenu
 Holidays are over: your usual theme is back
-Hiver (Noël) %d
-Winter (Christmas) %d
 Réseau
 Network
 État, adresse IP, test de connexion
@@ -1074,3 +1070,183 @@ APPLIS
 APPS
 Fond d'écran démarrage
 Startup wallpaper
+Téléchargement annulé
+Download cancelled
+Arrêt du téléchargement en cours, réessaie dans un instant
+Stopping the download, try again in a moment
+Téléchargement déjà en cours
+Download already in progress
+Mise à jour %s disponible : Réglages > Système
+Update %s available: Settings > System
+Recherche...
+Searching...
+À jour (%s)
+Up to date (%s)
+%s disponible : X pour installer
+%s available: X to install
+Pas de réponse : X pour réessayer
+No response: X to retry
+Téléchargement %d / %d
+Downloading %d / %d
+Installée : redémarrage...
+Installed: restarting...
+Échec : X pour réessayer
+Failed: X to retry
+Version %s : X pour chercher
+Version %s: X to check
+Mise à jour %s
+Update %s
+Mise à jour annulée.
+Update cancelled.
+La mise à jour a échoué :
+The update failed:
+Rien n'a été remplacé : la version actuelle reste installée.
+Nothing was replaced: the current version stays installed.
+O Fermer
+O Close
+Ne quitte pas l'appli pendant la mise à jour.
+Don't leave the app during the update.
+Installer la mise à jour %s ?
+Install update %s?
+Nouvelle version d'Area Play.
+New version of Area Play.
+L'appli redémarrera ensuite.
+The app will restart afterwards.
+Retour dans Area Play : plugin areaplay_return.suprx requis (voir README)
+Return to Area Play: plugin areaplay_return.suprx required (see README)
+Menu rapide
+Quick menu
+Luminosité
+Brightness
+Volume
+Volume
+Mettre en veille
+Sleep
+Retour à la LiveArea
+Back to LiveArea
+Redémarrer la console
+Restart the console
+Éteindre la console
+Turn off the console
+X Valider;. Gauche / Droite : régler;O Fermer
+X Select;. Left / Right: adjust;O Close
+Système
+System
+Mises à jour, retour après un jeu
+Updates, return after a game
+Mises à jour, nouveautés, retour après un jeu
+Updates, what's new, return after a game
+Nouveautés
+What's new
+Version %s disponible
+Version %s available
+Version %s
+Version %s
+Version %s (installée)
+Version %s (installed)
+Aucune information
+No information
+. Haut / Bas : défiler;O Fermer
+. Up / Down: scroll;O Close
+Mise à jour
+Update
+Chercher au démarrage
+Check at startup
+Retour dans Area Play après un jeu
+Return to Area Play after a game
+Plugin areaplay_return.suprx requis (voir README)
+Plugin areaplay_return.suprx required (see README)
+Mises à jour, retour après un jeu, bouton PS
+Updates, return after a game, PS button
+
+# ---- Transfert Wi-Fi ----
+Icône
+Icon
+Jeu rétro
+Retro game
+Pas assez de place sur la carte mémoire
+Not enough space on the memory card
+Écriture impossible (%08X)
+Cannot write (%08X)
+Transfert interrompu
+Transfer interrupted
+Écriture impossible (carte pleine ?)
+Cannot write (card full?)
+Écriture impossible
+Cannot write
+Demande invalide
+Invalid request
+Image PNG ou JPG attendue (16 Mo au plus)
+PNG or JPG image expected (16 MB max)
+Système introuvable
+System not found
+Fichier .iso ou .cso attendu
+.iso or .cso file expected
+Ce fichier n'est pas une image PNG ou JPG
+This file is not a PNG or JPG image
+Pas de Wi-Fi : connecte la console à ton réseau.
+No Wi-Fi: connect the console to your network.
+Serveur impossible (%08X)
+Cannot start the server (%08X)
+Serveur impossible
+Cannot start the server
+%d fichiers reçus
+%d files received
+%d fichier reçu
+%d file received
+%.2f Go
+%.2f GB
+%.1f Mo
+%.1f MB
+%d Ko
+%d KB
+Transfert Wi-Fi
+Wi-Fi Transfer
+Sur ton PC ou ton téléphone, ouvre :
+On your PC or phone, open:
+ou scanne le QR code. Même réseau Wi-Fi que la console.
+or scan the QR code. Same Wi-Fi network as the console.
+%s / %s · %s/s · encore %d min
+%s / %s · %s/s · %d min left
+%s / %s · %s/s · encore %d s
+%s / %s · %s/s · %d s left
+En attente de fichiers...
+Waiting for files...
+Reçus : %d fichiers
+Received: %d files
+Reçus : %d fichier
+Received: %d file
+O Arrêter le transfert
+O Stop the transfer
+État, adresse IP, test de connexion, transfert Wi-Fi
+Status, IP address, connection test, Wi-Fi transfer
+Jaquettes, fonds d'écran, icônes, jeux rétro et jeux PSP.
+Covers, wallpapers, icons, retro games and PSP games.
+Area Play Updater installé
+Area Play Updater installed
+Installation de l'Updater : VitaDeploy de SKGleba (MIT)
+Updater installation: VitaDeploy by SKGleba (MIT)
+Copie du plugin impossible
+Cannot copy the plugin
+config.txt de taiHEN introuvable
+taiHEN config.txt not found
+Sauvegarde de config.txt impossible
+Cannot back up config.txt
+Écriture de config.txt impossible
+Cannot write config.txt
+Installer le plugin de retour ?
+Install the return plugin?
+Une ligne est ajoutée à config.txt (copie gardée).
+One line is added to config.txt (a copy is kept).
+La console redémarrera ensuite.
+The console will then restart.
+OK (images %u ms, mises à jour %u ms)
+OK (images %u ms, updates %u ms)
+Images
+Images
+échec
+failed
+Mises à jour
+Updates
+Nouveautés : Réglages > Système > Nouveautés.
+What's new: Settings > System > What's new.

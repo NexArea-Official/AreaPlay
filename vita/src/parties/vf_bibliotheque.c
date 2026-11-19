@@ -1171,6 +1171,21 @@ static int launch_game(Game *g, char *err, int errsz) {
   g->last_played = now;
   recents_set(g->id, now);
   recents_save();
+  if (opt_return) { /* plugin areaplay_return : l'appli a surveiller (Title ID de l'adresse ; ISO : puis Adrenaline) */
+    const char *tid = strstr(uri, "titleid=");
+    char ids[48] = "";
+    if (tid) {
+      tid += 8;
+      int n = 0;
+      while (tid[n] && tid[n] != '&' && n < 15) ++n;
+      snprintf(ids, sizeof(ids), "%.*s%s", n, tid, (PSP_FILE(g) || g->kind == KIND_PSP) ? " PSPEMUCFW" : "");
+    }
+    SceUID jf = sceIoOpen(DATA_DIR "/jeu.txt", SCE_O_WRONLY | SCE_O_CREAT | SCE_O_TRUNC, 0777);
+    if (jf >= 0) {
+      sceIoWrite(jf, ids, strlen(ids));
+      sceIoClose(jf);
+    }
+  }
   sceKernelDelayThread(10000);
   int r1 = sceAppMgrLaunchAppByUri(0xFFFFF, uri);
   sceKernelDelayThread(10000);

@@ -1,0 +1,35 @@
+# Area Play - theme Noel (format : voir THEMES.md)
+nom=Noël
+nom_en=Christmas
+description=Neige, houx et guirlande pour les fêtes.
+description_en=Snow, holly and lights for the holidays.
+proposer=1
+periode=12-01,01-06
+accent=4
+
+fond=#122A42
+texte=#F5F9FC
+texte_doux=#C4D6E4
+discret=#8CA6BA
+ligne=#2C4862
+barre=#0C1C2EBE
+carte=#18344CCD
+bord_carte=#4C708C
+verre=#163048A5
+interrupteur=#3C566A
+degrade_haut=#1A3A62
+degrade_bas=#102C34
+titre=#E8B960
+
+fond_ecran=hiver1.jpg
+fond_sombre_bas=1
+sons=clochettes
+bouton_lumineux=1
+guirlande=#D9374B #E8B960 #3FAE6A #8FD0FF
+neige_posee=deco/neige
+neige_raccords=1841,410,1484 1803,220,1446 1812,241,1408
+deco_carte=deco/houx.png
+deco_menu=deco/houx.png
+deco_bouton=deco/houx.png
+icones=deco/icone_sapin.png deco/icone_cadeau.png deco/icone_flocon.png
+effet=neige 90

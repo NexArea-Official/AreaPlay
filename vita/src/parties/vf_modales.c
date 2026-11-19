@@ -616,8 +616,12 @@ static void draw_confirm(void) {
   float cx = x + w / 2;
   /* icone */
   unsigned int ic = T.acc_text;
-  if (conf_kind == 4) { /* proposition du theme Noel : un sapin */
-    xmas_icon(0, cx, y + 49, 46.0f, ic);
+  if (conf_kind == 6) { /* plugin de retour */
+    if (!draw_ico_file(ICO_PLAY, cx, y + 49, 46.0f, ic)) draw_set_icon(ICO_PLAY, cx, y + 49, ic);
+  } else if (conf_kind == 5) { /* mise a jour */
+    if (!draw_ico_file(ICO_DOWNLOAD, cx, y + 49, 46.0f, ic)) draw_set_icon(ICO_DOWNLOAD, cx, y + 49, ic);
+  } else if (conf_kind == 4) { /* proposition d'un theme de fete : sa premiere icone (Noel : un sapin) */
+    if (!theme_icon_preview(conf_arg, cx, y + 49, 46.0f, ic)) draw_set_icon(ICO_THEME, cx, y + 49, ic);
   } else if (conf_kind == 1) { /* quitter : une maison (retour a l'accueil de la Vita) */
     if (!draw_ico_file(ICO_M_HOME, cx, y + 49, 46.0f, ic)) {
       float cy = y + 49;
@@ -639,10 +643,23 @@ static void draw_confirm(void) {
     snprintf(l1b, sizeof(l1b), L("« %s » sera supprimée."), nm);
     l1 = l1b;
     l2 = "Les jeux restent dans leur système.";
+  } else if (conf_kind == 5) { /* mise a jour : les nouveautes (longues) sont dans la fenetre Nouveautes */
+    static char t5[64];
+    snprintf(t5, sizeof(t5), L("Installer la mise à jour %s ?"), upd_ver);
+    t1 = t5;
+    l1 = "Nouveautés : Réglages > Système > Nouveautés.";
+    l2 = "L'appli redémarrera ensuite.";
   } else if (conf_kind == 4) {
-    t1 = "Passer au thème Noël ?";
-    l1 = "Neige, houx et guirlande pour les fêtes.";
-    l2 = "Ton thème actuel reviendra après le 6 janvier.";
+    static char t4[64];
+    const FileTheme *ft4 = conf_arg >= 0 && conf_arg < ft_n ? &ft[conf_arg] : NULL;
+    snprintf(t4, sizeof(t4), L("Passer au thème %s ?"), ft4 ? theme_name(BUILTIN_THEMES + conf_arg) : "");
+    t1 = t4;
+    l1 = !ft4 ? "" : lang_code[0] && ft4->desc_en[0] ? ft4->desc_en : ft4->desc;
+    l2 = "Ton thème actuel reviendra à la fin de la période.";
+  } else if (conf_kind == 6) { /* plugin de retour : installe par Area Play */
+    t1 = "Installer le plugin de retour ?";
+    l1 = "Une ligne est ajoutée à config.txt (copie gardée).";
+    l2 = "La console redémarrera ensuite.";
   } else if (conf_kind == 3) { /* retirer un systeme ajoute (START sur sa tuile) */
     char nm[48];
     fit_text(ST_REG, FS_BODY, conf_arg >= 0 && conf_arg < MAX_CUSTOM_SYS ? slot_name[conf_arg] : "", 300, nm, sizeof(nm));

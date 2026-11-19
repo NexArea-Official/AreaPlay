@@ -6,7 +6,7 @@
 /* Jaquette centree sur cxm, hauteur h, avec ombre. */
 
 /* ---- Zones tactiles : chaque ecran declare ses zones, l'ecran tactile les relit ---- */
-enum { H_ITEM = 1, H_RAIL, H_LAUNCH, H_INFO, H_BACK, H_QUIT, H_SEARCH, H_KEY, H_NET };
+enum { H_ITEM = 1, H_RAIL, H_LAUNCH, H_INFO, H_BACK, H_QUIT, H_SEARCH, H_KEY, H_NET, H_UPD };
 #define HIT_MAX 192 /* zones tactiles par image (le clavier a lui seul en a 60) */
 static int rail_quit; /* 1 = le bouton Quitter a le focus (menu de gauche) */
 static struct { float x, y, w, h; int type, idx; } hits[HIT_MAX];
@@ -280,7 +280,7 @@ static void thumb_rect(const Game *g, float cxm, float y, float wmax, float h, f
   *rh = ih;
 }
 
-/* Theme Noel : jaquette avec la neige posee dessus ; holly = houx sur le coin haut gauche (1) ou droit (2). */
+/* Theme en fichier : jaquette avec la neige posee dessus ; holly = decoration (houx) sur le coin haut gauche (1) ou droit (2). */
 /* scale : agrandissement de la carte (1 au repos) ; la neige garde sa forme. */
 static void draw_thumb_xmas(const Game *g, float cxm, float y, float wmax, float h, float alpha, int snow, int holly,
                             float scale) {
@@ -289,6 +289,15 @@ static void draw_thumb_xmas(const Game *g, float cxm, float y, float wmax, float
   float rx, ry, rw, rh;
   thumb_rect(g, cxm, y, wmax, h, &rx, &ry, &rw, &rh);
   if (snow) snow_cap_ref(rx, ry, rw, rw / scale, xm_hash(g->id), 9.0f, alpha);
+  if (snow) theme_cover_deco(rx, ry, rw, rh, xm_hash(g->id), alpha); /* Paques : herbe et oeufs en bas */
+  if (holly == 1) holly_at(rx - 18, ry - 20, 50, 0, -10, alpha);
+  if (holly == 2) holly_at(rx + rw - 32, ry - 20, 50, 1, 10, alpha);
+}
+/* Seulement la decoration (houx, panier) sur le coin de la jaquette : dessinee apres le cadre du bandeau, devant lui. */
+static void thumb_holly(const Game *g, float cxm, float y, float wmax, float h, float alpha, int holly) {
+  if (!xmas_on()) return;
+  float rx, ry, rw, rh;
+  thumb_rect(g, cxm, y, wmax, h, &rx, &ry, &rw, &rh);
   if (holly == 1) holly_at(rx - 18, ry - 20, 50, 0, -10, alpha);
   if (holly == 2) holly_at(rx + rw - 32, ry - 20, 50, 1, 10, alpha);
 }
@@ -344,7 +353,7 @@ static void section_hint(int y, const char *keys, const char *label) {
 /* Comme Android : face (hauteur h - 3) posee sur une ombre de la couleur sombre decalee de 3 vers le bas
  * (bas du bouton a y + h + 3) ; le halo suit exactement ce contour, sans vide en dessous. */
 static void primary_button(float x, float y, float w, float h, float pa) {
-  if (xmas_on()) glow(x, y, w, h + 3, h / 2, 1.0f, pa); /* theme Noel : bouton Lancer lumineux */
+  if (theme_glow()) glow(x, y, w, h + 3, h / 2, 1.0f, pa); /* theme (Noel) : bouton Lancer lumineux */
   rr_band(x, y, w, h + 3, h / 2, 8.0f, fade(with_alpha(T.acc, 70), pa), with_alpha(T.acc, 0));
   round_rect(x, y + 3, w, h, h / 2, fade(T.acc_dark, pa));
   round_rect(x, y, w, h - 3, h / 2, fade(T.acc, pa));
@@ -370,10 +379,8 @@ static void draw_hero_tile(const Game *hero, int is_home, const char *button) {
   if (opt_gloss) gloss(x, y, TILE_W, TILE_H, 18, 0.42f, 30, pa);
   round_outline(x, y, TILE_W, TILE_H, 18,
                 fade(opt_gloss ? T.glass_border : T.card_border, pa));
-  if (xmas_on()) { /* theme Noel : guirlande autour de la tuile, neige sur le haut */
-    garland(x, y, TILE_W, TILE_H, pa);
-    snow_cap(x + 10, y, TILE_W - 28, 7, 20.0f, pa);
-  }
+  garland(x, y, TILE_W, TILE_H, pa); /* theme en fichier : guirlande autour de la tuile, neige sur le haut */
+  snow_cap(x, y, TILE_W, 7, 20.0f, pa);
 
   int tx0 = (int)x + 28;
 
@@ -389,7 +396,7 @@ static void draw_hero_tile(const Game *hero, int is_home, const char *button) {
 
   const char *label = is_home ? (hero->last_played > 0 ? "REPRENDRE" : "BIBLIOTHÈQUE")
                               : (opt_show_id ? hero->detail : kind_label(hero));
-  spaced(ST_REG, tx0, 100, FS_SMALL, fade(xmas_on() ? C(232, 185, 96, 255) : T.acc_text, ha), label, SPACING + 1, 1);
+  spaced(ST_REG, tx0, 100, FS_SMALL, fade(theme_title(T.acc_text), ha), label, SPACING + 1, 1);
 
   static const int title_sizes[3] = {FS_HERO, FS_TITLE, FS_SECTION};
   draw_title_fit(ST_SEMI, tx0, 148, fade(T.text, ha), hero->name,
@@ -416,7 +423,10 @@ static void draw_hero_tile(const Game *hero, int is_home, const char *button) {
   draw_info_button(tx0 + 184, 196, 112, pa);
   hit_add(tx0 + 184 - g_ox, 196, 112, 38, H_INFO, 0);
 
-  draw_thumb_xmas(hero, cx + cw / 2, cy, cw, ch, ha, 0, 1, 1.0f);
-  if (xmas_on()) holly_at(tx0 - 16, 170, 52, 0, -12, pa); /* sur le bouton Lancer */
+  draw_thumb(hero, cx + cw / 2, cy, cw, ch, ha);
+  theme_frame(x, y, TILE_W, TILE_H, pa);        /* cadre a rubans (Paques), devant la jaquette */
+  thumb_holly(hero, cx + cw / 2, cy, cw, ch, ha, 1); /* decorations devant le cadre */
+  holly_kind(2, tx0 - 16, 170, 52, 0, -12, pa); /* decoration du theme sur le bouton Lancer */
+  theme_spider(x, y, TILE_W, pa);               /* Halloween : araignee devant le bandeau */
 }
 

@@ -56,13 +56,14 @@ static const struct {
   char tag;
   const char *dir;
 } wall_dirs[4] = {{'a', "app0:assets/wallpapers"}, {'t', "app0:assets/themes"}, {'u', WALL_DIR},
-                 {'x', "app0:assets/xmas"}}; /* x : fonds d'hiver du theme Noel */
+                 {'x', ft_wall_dir}}; /* x : fonds du theme en fichier courant */
 
 static void wall_path_of(const char *ref, char *out, int n) {
   out[0] = 0;
   if (!ref || !ref[0] || ref[1] != ':' || !ref[2] || strchr(ref + 2, '/') || strstr(ref, "..")) return;
   for (int i = 0; i < 4; ++i)
-    if (wall_dirs[i].tag == ref[0]) snprintf(out, n, "%s/%s", wall_dirs[i].dir, ref + 2);
+    if (wall_dirs[i].tag == ref[0]) /* 'x' sans theme en fichier : fonds d'hiver de Noel (choix fait en 1.0) */
+      snprintf(out, n, "%s/%s", ref[0] == 'x' && !wall_dirs[i].dir[0] ? "app0:assets/themes/noel" : wall_dirs[i].dir, ref + 2);
 }
 
 /* ref == NULL : retour au fond du theme. */

@@ -2,6 +2,20 @@
 
 All notable changes to Area Play. **1.0** is the first public release. Area Play was developed privately under the name *VitaFlow* (versions 1.x to 6.0); that history is summarised below.
 
+## 1.1
+
+### Added
+- **Updates from the app**: Area Play checks for a new version at start-up, shows a small notification and installs it in one press through *Area Play Updater*, which Area Play installs by itself. Every file is checked (size and checksum) before anything is replaced. Automatic installation is optional (Settings > System).
+- **What's new** window in Settings > System, with the changes of every version.
+- **Wi-Fi transfer**: open the address or scan the QR code shown on the Vita, then send covers, wallpapers, system icons, retro games and PSP ISOs from a PC or a phone. Nothing is deleted: files are only added (a file with the same name, or the game's previous cover, is replaced).
+- **Quick menu** (hold START): brightness, volume, Wi-Fi transfer, sleep, back to LiveArea, restart, power off.
+- **Back to Area Play after a game** (optional): the small `areaplay_return` plugin is installed by the app after you confirm. It adds one line under `*main` in your taiHEN config.txt and keeps a backup (`config.txt.areaplay.bak`).
+- **Built-in secure connection** (curl + OpenSSL): covers and updates work on any firmware, iTLS-Enso is no longer needed.
+
+### Improved
+- Connection test (Settings > Network) checks the image server and the update server separately.
+- About page: "launcher" wording, new credits (VitaDeploy, curl, OpenSSL).
+
 ## 1.0 — first public release (Vita Edition)
 
 ### New name and look

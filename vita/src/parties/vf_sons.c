@@ -15,7 +15,7 @@
 #define SND_MAX_LEN (SND_RATE * 2) /* 2 s au plus par son */
 enum { SND_MOVE = 0, SND_OK, SND_BACK, SND_N };
 static const char *snd_names[SND_N] = {"deplacement", "valider", "retour"};
-static short *snd_pcm[2 * SND_N]; /* SND_N sons normaux, puis les memes au celesta (theme Noel) */
+static short *snd_pcm[2 * SND_N]; /* SND_N sons normaux, puis les memes en clochettes (theme Noel) */
 static int snd_len[2 * SND_N];
 static volatile int snd_req = -1; /* son demande par le thread principal (-1 = rien) */
 static int snd_port = -1;
@@ -44,26 +44,24 @@ static void snd_synth(int id, const float *freqs, const int *ms, int notes, floa
   snd_len[id] = total;
 }
 
-/* Theme Noel : celesta (son rond et feutre de Casse-Noisette) : fondamentale, legere desaccordee, octave et
- * double octave qui s'eteignent plus vite. Notes de duree ms[i], chacune avec sa propre attaque (5 ms) ;
- * fin adoucie sur 12 ms (pas de clic). Volume bas : pas de saturation du haut-parleur. */
-static void snd_celesta(int id, const float *freqs, const int *ms, int notes) {
+/* Theme Noel : clochette, comme VitaFlow Android (Sounds.kt bell) : partiels non harmoniques d'une cloche,
+ * qui s'eteignent plus lentement. */
+static void snd_bell(int id, const float *freqs, const int *ms, int notes, float amp) {
   int total = 0;
   for (int i = 0; i < notes; ++i) total += SND_RATE * ms[i] / 1000;
   short *p = (short *)malloc((size_t)total * sizeof(short));
   if (!p) return;
   int o = 0;
   for (int i = 0; i < notes; ++i) {
-    int n = SND_RATE * ms[i] / 1000, tail = SND_RATE * 12 / 1000;
+    int n = SND_RATE * ms[i] / 1000;
     float w = 6.2831853f * freqs[i] / SND_RATE;
     for (int k = 0; k < n; ++k, ++o) {
-      float t = (float)k / SND_RATE;
-      float env = k < 240 ? k / 240.0f : 1.0f;
-      if (k > n - tail) env *= (float)(n - k) / tail;
-      float e7 = expf(-7.0f * t);
-      float s = sinf(w * k) * e7 + 0.35f * sinf(1.003f * w * k) * e7 + 0.30f * sinf(2.0f * w * k) * expf(-12.0f * t) +
-                0.06f * sinf(4.0f * w * k) * expf(-30.0f * t);
-      p[o] = (short)(s * env * 3600.0f);
+      float t = (float)k / n;
+      float env = (k < 48 ? k / 48.0f : 1.0f) * expf(-5.0f * t);
+      float s = sinf(w * k) + 0.45f * sinf(2.0f * w * k) * expf(-3.0f * t) + 0.3f * sinf(2.76f * w * k) * expf(-6.0f * t) +
+                0.15f * sinf(5.4f * w * k) * expf(-9.0f * t);
+      float v = s * env * amp * 17000.0f;
+      p[o] = (short)(v > 32767.0f ? 32767.0f : v < -32767.0f ? -32767.0f : v);
     }
   }
   snd_pcm[id] = p;
@@ -171,12 +169,12 @@ static int snd_start(void) {
     snd_synth(SND_MOVE, mv_f, mv_ms, 1, 0.22f);
     snd_synth(SND_OK, ok_f, ok_ms, 2, 0.30f);
     snd_synth(SND_BACK, bk_f, bk_ms, 2, 0.26f);
-    /* theme Noel (celesta) : deplacement = do aigu ; valider = sol do mi qui montent ; retour = mi do sol */
-    static const float xm_f[1] = {1046.5f}, xo_f[3] = {784.0f, 1046.5f, 1318.5f}, xb_f[3] = {1318.5f, 1046.5f, 784.0f};
-    static const int xm_ms[1] = {200}, xo_ms[3] = {110, 110, 320}, xb_ms[3] = {110, 110, 300};
-    snd_celesta(SND_N + SND_MOVE, xm_f, xm_ms, 1);
-    snd_celesta(SND_N + SND_OK, xo_f, xo_ms, 3);
-    snd_celesta(SND_N + SND_BACK, xb_f, xb_ms, 3);
+    /* theme Noel : clochettes (memes sons qu'Android) */
+    static const float bm_f[1] = {2093.0f}, bo_f[2] = {1568.0f, 2093.0f}, bb_f[2] = {2093.0f, 1568.0f};
+    static const int bm_ms[1] = {90}, bo_ms[2] = {80, 220}, bb_ms[2] = {80, 200};
+    snd_bell(SND_N + SND_MOVE, bm_f, bm_ms, 1, 0.20f);
+    snd_bell(SND_N + SND_OK, bo_f, bo_ms, 2, 0.28f);
+    snd_bell(SND_N + SND_BACK, bb_f, bb_ms, 2, 0.24f);
   }
   for (int i = 0; i < SND_N; ++i) { /* fichiers WAV de l'utilisateur, s'il y en a */
     char path[96];
@@ -210,7 +208,7 @@ static int snd_start(void) {
 static void snd_play(int id) {
   if (!opt_sound || id < 0 || id >= SND_N) return;
   if (!snd_start()) return;
-  if (xmas_on() && snd_pcm[SND_N + id]) id += SND_N; /* theme Noel : celesta */
+  if (ftc() && ftc()->bells && snd_pcm[SND_N + id]) id += SND_N; /* theme Noel : clochettes */
   if (!snd_pcm[id]) return;
   snd_req = id;
 }

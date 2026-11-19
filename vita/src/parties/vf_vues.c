@@ -51,7 +51,7 @@ static void draw_catalog_grid(Game **list, int n, int sel, float dy) {
   const Game *g = list[sel];
   round_rect(x, by, TILE_W, bh, 14, fade(opt_backdrop || wall_path[0] ? T.glass : T.card, pa));
   round_outline(x, by, TILE_W, bh, 14, fade(opt_gloss ? T.glass_border : T.card_border, pa));
-  spaced(ST_REG, (int)x + 24, (int)by + 24, FS_SMALL, fade(xmas_on() ? C(232, 185, 96, 255) : T.acc_text, pa), opt_show_id ? g->detail : kind_label(g),
+  spaced(ST_REG, (int)x + 24, (int)by + 24, FS_SMALL, fade(theme_title(T.acc_text), pa), opt_show_id ? g->detail : kind_label(g),
          SPACING + 1, 1);
   char ago[40], right[64];
   if (g->last_played > 0) {
@@ -423,11 +423,9 @@ static void draw_view_list(Game **list, int n, int sel, const char *button) {
   round_rect(px, py, pw, ph, 18, fade(opt_backdrop || wall_path[0] ? T.glass : T.card, pa));
   if (opt_gloss) gloss(px, py, pw, ph, 18, 0.30f, 26, pa);
   round_outline(px, py, pw, ph, 18, fade(opt_gloss ? T.glass_border : T.card_border, pa));
-  if (xmas_on()) { /* theme Noel : guirlande et neige sur l'apercu */
-    garland(px, py, pw, ph, pa);
-    snow_cap(px + 10, py, pw - 28, 11, 16.0f, pa);
-  }
-  draw_thumb_xmas(hero, px + 16 + 106, py + 40, 212, 262, ha, 1, 2, 1.0f);
+  garland(px, py, pw, ph, pa); /* theme en fichier : guirlande et neige sur l'apercu */
+  snow_cap(px, py, pw, 11, 16.0f, pa);
+  draw_thumb_xmas(hero, px + 16 + 106, py + 40, 212, 262, ha, 1, 0, 1.0f);
   float cx2 = px + 244, cw2 = pw - 244 - 16;
   draw_wrapped(ST_SEMI, (int)cx2, (int)py + 38, FS_BODY, (int)cw2, 3, 22, fade(T.text, ha), hero->name);
   float iy = py + 38 + 3 * 22 + 8; /* les lignes suivantes ne bougent jamais */
@@ -463,7 +461,10 @@ static void draw_view_list(Game **list, int n, int sel, const char *button) {
   hit_add(bx - g_ox, by, bw2, 38, H_LAUNCH, 0);
   draw_info_button(bx + bw2 + 8, by, bw2, pa);
   hit_add(bx + bw2 + 8 - g_ox, by, bw2, 38, H_INFO, 0);
-  if (xmas_on()) holly_at(bx - 16, by - 26, 52, 0, -12, pa); /* sur le bouton Lancer */
+  theme_frame(px, py, pw, ph, pa);                 /* cadre a rubans (Paques) */
+  thumb_holly(hero, px + 16 + 106, py + 40, 212, 262, ha, 2); /* decorations devant le cadre */
+  holly_kind(2, bx - 16, by - 26, 52, 0, -12, pa); /* decoration du theme sur le bouton Lancer */
+  theme_spider(px, py, pw, pa);                    /* Halloween : araignee devant l'apercu */
 }
 
 /* Liste vide : message centre. */
@@ -491,7 +492,7 @@ static void draw_system_card(int idx, float x, float y, float w, float h, float 
              f > 0.02f ? T.acc : T.card_border, alpha * (0.85f + 0.15f * f));
   if (f > 0.02f) round_outline_t(cx, cy, dw, dh, 16, 2.0f, fade(T.acc, alpha * f));
   if (opt_gloss) gloss(cx, cy, dw, dh, 16, 0.38f, f > 0.02f ? 26 : 16, alpha);
-  if (xmas_on()) snow_cap_ref(cx, cy, dw - 1, w - 1, (unsigned)(idx * 31 + 3), 10.0f, alpha); /* devant le contour */
+  snow_cap_ref(cx, cy, dw - 1, w - 1, (unsigned)(idx * 31 + 3), 10.0f, alpha); /* devant le contour */
 
   float icx = cx + dw / 2, icy = cy + 12 * s;
   float side = dh * 0.64f; /* zone de l'icone : grande */
@@ -551,7 +552,7 @@ static void draw_coll_card(int idx, float x, float y, float w, float h, float f)
              f > 0.02f ? T.acc : T.card_border, alpha * (0.85f + 0.15f * f));
   if (f > 0.02f) round_outline_t(cx, cy, dw, dh, 16, 2.0f, fade(T.acc, alpha * f));
   if (opt_gloss) gloss(cx, cy, dw, dh, 16, 0.38f, f > 0.02f ? 26 : 16, alpha);
-  if (xmas_on()) snow_cap_ref(cx, cy, dw - 1, w - 1, (unsigned)(idx * 37 + 5), 10.0f, alpha); /* devant le contour */
+  snow_cap_ref(cx, cy, dw - 1, w - 1, (unsigned)(idx * 37 + 5), 10.0f, alpha); /* devant le contour */
 
   float pad = 12 * s, ix = cx + pad, iy = cy + pad, iw = dw - 2 * pad, ih = dh * 0.64f - pad;
   float ty = cy + dh - 50 * s, ty2 = cy + dh - 22 * s, icx = cx + dw / 2;

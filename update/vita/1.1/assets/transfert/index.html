@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Area Play · Transfert Wi-Fi</title>
+<style>
+  :root { --bg:#0b1220; --card:#131d31; --line:#24314d; --text:#eef3ff; --soft:#b7c3dc; --muted:#7f8db0; --acc:#3a8bff; --ok:#3ccf8e; --err:#f07a6e; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color:var(--text);
+         background: radial-gradient(circle at 20% 0%, #16264a 0%, var(--bg) 55%) fixed; min-height:100vh; }
+  header { display:flex; align-items:center; gap:14px; padding:22px 24px 6px; max-width:1100px; margin:auto; }
+  .logo { width:38px; height:44px; }
+  h1 { font-size:22px; margin:0; letter-spacing:3px; font-weight:700; }
+  h1 small { display:block; font-size:12px; letter-spacing:2px; color:var(--acc); font-weight:600; margin-top:2px; }
+  .intro { max-width:1100px; margin:auto; padding:6px 24px 14px; color:var(--muted); font-size:14px; }
+  main { max-width:1100px; margin:auto; padding:0 24px 24px; display:grid; gap:16px; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:16px; display:flex; flex-direction:column; gap:10px; }
+  .card h2 { margin:0; font-size:16px; }
+  .card p { margin:0; font-size:13px; color:var(--muted); }
+  select, input[type=search] { width:100%; background:#0d1628; color:var(--text); border:1px solid var(--line); border-radius:10px; padding:9px 10px; font-size:14px; }
+  .drop { border:2px dashed var(--line); border-radius:12px; padding:18px 10px; text-align:center; color:var(--soft); font-size:14px; cursor:pointer; transition:.15s; }
+  .drop:hover, .drop.over { border-color:var(--acc); background:rgba(58,139,255,.08); color:var(--text); }
+  .drop.off { opacity:.4; pointer-events:none; }
+  #queue { max-width:1100px; margin:auto; padding:0 24px 40px; }
+  #queue h2 { font-size:15px; color:var(--soft); margin:8px 0; }
+  .item { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:10px 14px; margin-bottom:8px; }
+  .item .top { display:flex; justify-content:space-between; gap:10px; font-size:14px; }
+  .item .name { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .item .st { color:var(--muted); white-space:nowrap; font-size:13px; }
+  .item.ok .st { color:var(--ok); }
+  .item.err .st { color:var(--err); }
+  .bar { height:6px; border-radius:3px; background:var(--line); margin-top:8px; overflow:hidden; }
+  .bar i { display:block; height:100%; width:0; background:var(--acc); transition:width .2s; }
+  .item.ok .bar i { background:var(--ok); }
+  .item.err .bar i { background:var(--err); }
+  .note { font-size:12px; color:var(--muted); }
+  input[type=file] { display:none; }
+</style>
+</head>
+<body>
+<header>
+  <svg class="logo" viewBox="30 20 68 84"><polygon points="64,20 64,64 30,104" fill="#3a8bff"/><polygon points="64,20 98,104 64,64" fill="#5fe0ff"/><polygon points="30,104 64,64 64,86 48,104" fill="#1d5fd0"/><polygon points="64,64 98,104 80,104 64,86" fill="#1d5fd0"/></svg>
+  <h1>AREA PLAY<small data-t="sub">TRANSFERT WI-FI</small></h1>
+</header>
+<div class="intro" data-t="intro">Glisse tes fichiers dans la bonne case, ou clique dessus pour les choisir. Garde la fenêtre « Transfert Wi-Fi » ouverte sur la console.</div>
+<main>
+  <section class="card">
+    <h2 data-t="cover">Jaquette d'un jeu</h2>
+    <p data-t="coverp">Choisis le jeu, puis son image (PNG ou JPG).</p>
+    <input type="search" id="gfind" data-tp="find" placeholder="Chercher un jeu...">
+    <select id="game"></select>
+    <div class="drop" data-k="cover" data-accept="image/png,image/jpeg" data-t="dropimg">Glisse l'image ici</div>
+  </section>
+  <section class="card">
+    <h2 data-t="wall">Fonds d'écran</h2>
+    <p data-t="wallp">Images 960 × 544 de préférence. Elles apparaissent dans Réglages > Thème > Fond d'écran.</p>
+    <div class="drop" data-k="wall" data-accept="image/png,image/jpeg" data-multi="1" data-t="dropimgs">Glisse les images ici</div>
+  </section>
+  <section class="card">
+    <h2 data-t="icon">Icône d'un système</h2>
+    <p data-t="iconp">L'image de la tuile du système dans la page Jeux.</p>
+    <select id="sys"></select>
+    <div class="drop" data-k="icon" data-accept="image/png,image/jpeg" data-t="dropimg">Glisse l'image ici</div>
+  </section>
+  <section class="card">
+    <h2 data-t="rom">Jeux rétro</h2>
+    <p id="romp" data-t="romp">Les fichiers vont dans le dossier des jeux du système choisi.</p>
+    <select id="romsys"></select>
+    <div class="note" id="romdir"></div>
+    <div class="drop" data-k="rom" data-multi="1" data-t="dropfiles">Glisse les jeux ici</div>
+  </section>
+  <section class="card">
+    <h2 data-t="iso">Jeux PSP (ISO / CSO)</h2>
+    <p data-t="isop">Copiés dans ux0:pspemu/ISO. Environ 1 à 2 Mo/s : compte 10 à 15 minutes pour 1 Go.</p>
+    <div class="note" id="adr"></div>
+    <div class="drop" data-k="iso" data-accept=".iso,.cso" data-multi="1" data-t="dropiso">Glisse les ISO ici</div>
+  </section>
+</main>
+<div id="queue"></div>
+<input type="file" id="pick">
+<script>
+const T = {
+  fr: {},
+  en: {
+    sub: "WI-FI TRANSFER",
+    intro: "Drop your files on the right box, or click it to choose them. Keep the “Wi-Fi Transfer” window open on the console.",
+    cover: "Game cover", coverp: "Choose the game, then its image (PNG or JPG).", find: "Search a game...",
+    dropimg: "Drop the image here", wall: "Wallpapers",
+    wallp: "960 × 544 images preferred. They show up in Settings > Theme > Wallpaper.", dropimgs: "Drop the images here",
+    icon: "System icon", iconp: "The system tile image in the Games page.",
+    rom: "Retro games", romp: "Files go to the games folder of the chosen system.", dropfiles: "Drop the games here",
+    iso: "PSP games (ISO / CSO)", isop: "Copied to ux0:pspemu/ISO. About 1 to 2 MB/s: count 10 to 15 minutes per GB.",
+    dropiso: "Drop the ISOs here", folder: "Folder: ", noroms: "No retro system yet: add one in Area Play (Games > Add a system) and choose its core.",
+    adrno: "Without Adrenaline Launcher (RetroFlow), ISO games are not listed in Area Play (they still work in Adrenaline).",
+    queue: "Transfers", wait: "Waiting", sending: "Sending", done: "Received", fail: "Failed", lost: "Console unreachable",
+    nogame: "Choose a game first", nosys: "Choose a system first"
+  }
+};
+const FR = { folder: "Dossier : ", noroms: "Aucun système rétro : ajoute-en un dans Area Play (Jeux > Ajouter un système) et choisis son cœur.",
+  adrno: "Sans Adrenaline Launcher (RetroFlow), les jeux ISO ne sont pas listés dans Area Play (ils marchent toujours dans Adrenaline).",
+  queue: "Transferts", wait: "En attente", sending: "Envoi", done: "Reçu", fail: "Échec", lost: "Console injoignable",
+  nogame: "Choisis d'abord un jeu", nosys: "Choisis d'abord un système" };
+let L = FR, info = null;
+const $ = s => document.querySelector(s);
+const tr = k => L[k] || FR[k] || k;
+
+function fill(sel, items, label) {
+  sel.innerHTML = "";
+  for (const it of items) { const o = document.createElement("option"); o.value = it.v; o.textContent = label(it); sel.appendChild(o); }
+}
+function games(filter) {
+  const f = (filter || "").toLowerCase();
+  const list = info.games.filter(g => !f || g.n.toLowerCase().includes(f) || g.id.toLowerCase().includes(f))
+                         .sort((a, b) => a.n.localeCompare(b.n)).map(g => ({ v: g.id, g }));
+  fill($("#game"), list, it => it.g.n + (it.g.s ? "  —  " + it.g.s : ""));
+}
+fetch("/info").then(r => r.json()).then(d => {
+  info = d;
+  if (d.lang === "en") {
+    L = T.en; document.documentElement.lang = "en";
+    document.querySelectorAll("[data-t]").forEach(e => { if (L[e.dataset.t]) e.textContent = L[e.dataset.t]; });
+    document.querySelectorAll("[data-tp]").forEach(e => { if (L[e.dataset.tp]) e.placeholder = L[e.dataset.tp]; });
+    document.title = "Area Play · Wi-Fi Transfer";
+  }
+  games("");
+  fill($("#sys"), d.icons.map(s => ({ v: s.i, s })), it => it.s.n);
+  fill($("#romsys"), d.roms.map(s => ({ v: s.k, s })), it => it.s.n);
+  const showDir = () => { const r = d.roms.find(s => String(s.k) === $("#romsys").value); $("#romdir").textContent = r ? tr("folder") + r.d : ""; };
+  $("#romsys").onchange = showDir; showDir();
+  if (!d.roms.length) { $("#romp").textContent = tr("noroms"); $("#romsys").style.display = "none"; document.querySelector('[data-k=rom]').classList.add("off"); }
+  if (!d.adr) $("#adr").textContent = tr("adrno");
+}).catch(() => { $(".intro").textContent = tr("lost"); });
+$("#gfind").oninput = e => games(e.target.value);
+
+/* ---- File d'envoi : un fichier a la fois ---- */
+const queue = []; let busy = false;
+function fmt(b) { return b >= 1073741824 ? (b / 1073741824).toFixed(2) + (L === FR ? " Go" : " GB")
+                       : b >= 1048576 ? (b / 1048576).toFixed(1) + (L === FR ? " Mo" : " MB")
+                       : Math.ceil(b / 1024) + (L === FR ? " Ko" : " KB"); }
+function add(file, url, label) {
+  if (!$("#queue h2")) { const h = document.createElement("h2"); h.textContent = tr("queue"); $("#queue").appendChild(h); }
+  const el = document.createElement("div"); el.className = "item";
+  el.innerHTML = '<div class="top"><span class="name"></span><span class="st"></span></div><div class="bar"><i></i></div>';
+  el.querySelector(".name").textContent = label;
+  el.querySelector(".st").textContent = tr("wait") + " · " + fmt(file.size);
+  $("#queue").insertBefore(el, $("#queue h2").nextSibling);
+  queue.push({ file, url, el }); next();
+}
+function next() {
+  if (busy || !queue.length) return;
+  busy = true;
+  const job = queue.shift(), st = job.el.querySelector(".st"), bar = job.el.querySelector(".bar i");
+  const x = new XMLHttpRequest(), t0 = Date.now();
+  x.open("POST", job.url);
+  x.upload.onprogress = e => {
+    if (!e.lengthComputable) return;
+    const s = (Date.now() - t0) / 1000, sp = s > 0.5 ? e.loaded / s : 0;
+    bar.style.width = (100 * e.loaded / e.total) + "%";
+    st.textContent = tr("sending") + " · " + fmt(e.loaded) + " / " + fmt(e.total) + (sp ? " · " + fmt(sp) + "/s" : "");
+  };
+  const end = (ok, msg) => { job.el.classList.add(ok ? "ok" : "err"); bar.style.width = "100%";
+                             st.textContent = ok ? tr("done") : tr("fail") + (msg ? " : " + msg : ""); busy = false; next(); };
+  x.onload = () => { let r = {}; try { r = JSON.parse(x.responseText); } catch (e) {} end(!!r.ok, r.err); };
+  x.onerror = () => end(false, tr("lost"));
+  x.send(job.file);
+}
+function send(kind, files) {
+  for (const f of files) {
+    let q = "k=" + kind, label = f.name;
+    if (kind === "cover") { const v = $("#game").value; if (!v) return alert(tr("nogame"));
+      q += "&id=" + encodeURIComponent(v); label = $("#game").selectedOptions[0].textContent.split("  —  ")[0] + " · " + f.name; }
+    if (kind === "icon") { const v = $("#sys").value; if (v === "") return alert(tr("nosys")); q += "&i=" + v;
+      label = $("#sys").selectedOptions[0].textContent + " · " + f.name; }
+    if (kind === "rom") { const v = $("#romsys").value; if (v === "") return alert(tr("nosys")); q += "&s=" + v; }
+    add(f, "/up?" + q + "&n=" + encodeURIComponent(f.name), label);
+    if (kind === "cover" || kind === "icon") break; /* une seule image */
+  }
+}
+document.querySelectorAll(".drop").forEach(d => {
+  const kind = d.dataset.k;
+  d.onclick = () => {
+    const p = $("#pick"); p.value = ""; p.accept = d.dataset.accept || "";
+    p.multiple = !!d.dataset.multi;
+    p.onchange = () => send(kind, p.files); p.click();
+  };
+  d.ondragover = e => { e.preventDefault(); d.classList.add("over"); };
+  d.ondragleave = () => d.classList.remove("over");
+  d.ondrop = e => { e.preventDefault(); d.classList.remove("over"); send(kind, e.dataTransfer.files); };
+});
+</script>
+</body>
+</html>

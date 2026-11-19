@@ -51,40 +51,43 @@ static const struct {
      C(52, 22, 16, 255), C(14, 6, 6, 255)},
     {"Forêt", 9, C(8, 18, 14, 255), C(238, 248, 242, 255), C(180, 206, 192, 255), C(130, 158, 144, 255),
      C(26, 54, 42, 255), C(6, 14, 11, 218), C(14, 32, 26, 255), C(36, 76, 60, 255), C(10, 24, 18, 168), C(52, 84, 70, 255),
-     C(14, 44, 34, 255), C(4, 11, 8, 255)},
-    {"Noël", 4, C(18, 42, 66, 255), C(245, 249, 252, 255), C(196, 214, 228, 255), C(140, 166, 186, 255),
-     C(44, 72, 98, 255), C(12, 28, 46, 190), C(24, 52, 76, 205), C(76, 112, 140, 255), C(22, 48, 72, 165), C(60, 86, 106, 255),
-     C(26, 58, 98, 255), C(16, 44, 52, 255)}};
-#define THEME_COUNT LEN(themes)
-#define XMAS_THEME 5 /* theme Noel (vf_noel.c) */
-#define XMAS_WALL "app0:assets/xmas/hiver1.jpg" /* fond d'hiver du theme Noel, sans fond d'ecran choisi */
+     C(14, 44, 34, 255), C(4, 11, 8, 255)}};
+#define BUILTIN_THEMES ((int)LEN(themes)) /* themes de base ; les suivants sont des dossiers (vf_themes.c) */
+static const char *theme_file[] = {"sombre", "clair", "nexa", "braise", "foret"}; /* noms (images de fond, theme_id) */
+static void theme_file_colors(int i, unsigned int *c);
+static const char *theme_default_wall(void);
+static int theme_wall_shade(const char *wp);
 
 static vita2d_texture *theme_bg;
 static int theme_bg_idx = -1;
 static void apply_theme(void) {
   T.light = opt_theme == 1;
   {
-    const typeof(themes[0]) *th = &themes[opt_theme];
-    T.bg = th->bg;
-    T.text = th->text;
-    T.text_soft = th->text_soft;
-    T.muted = th->muted;
-    T.line = th->line;
-    T.bar = th->bar;
-    T.bar_text = th->text_soft;
+    int file = opt_theme >= BUILTIN_THEMES;
+    const typeof(themes[0]) *th = &themes[file ? 0 : opt_theme];
+    unsigned int c[12] = {th->bg, th->text, th->text_soft, th->muted, th->line, th->bar, th->card, th->card_border,
+                          th->glass, th->switch_off, th->grad_top, th->grad_bot};
+    if (file) theme_file_colors(opt_theme - BUILTIN_THEMES, c); /* theme en fichier : ses couleurs */
+    T.bg = c[0];
+    T.text = c[1];
+    T.text_soft = c[2];
+    T.muted = c[3];
+    T.line = c[4];
+    T.bar = c[5];
+    T.bar_text = c[2];
     T.bar_line = T.light ? C(0, 0, 0, 30) : C(255, 255, 255, 28);
-    T.card = th->card;
-    T.card_border = th->card_border;
-    T.glass = th->glass;
+    T.card = c[6];
+    T.card_border = c[7];
+    T.glass = c[8];
     T.glass_border = T.light ? C(150, 158, 185, 110) : C(255, 255, 255, 58);
-    T.switch_off = th->switch_off;
+    T.switch_off = c[9];
     T.backdrop_a = T.light ? 105 : 125;
-    T.neon = strcmp(th->name, "Nexa") == 0; /* contours lumineux + fond abstrait */
+    T.neon = !file && strcmp(th->name, "Nexa") == 0; /* contours lumineux + fond abstrait */
     if (T.neon) T.backdrop_a = 80; /* le fond abstrait reste visible */
-    if ((theme_bg_idx == opt_theme && theme_bg) || wall_path[0] || opt_theme == XMAS_THEME) T.backdrop_a = T.backdrop_a * 3 / 4; /* image de fond visible */
-    T.has_grad = th->grad_top != 0;
-    T.grad_top = th->grad_top;
-    T.grad_bot = th->grad_bot;
+    if ((theme_bg_idx == opt_theme && theme_bg) || wall_path[0] || file) T.backdrop_a = T.backdrop_a * 3 / 4; /* image de fond visible */
+    T.has_grad = c[10] != 0;
+    T.grad_top = c[10];
+    T.grad_bot = c[11];
   }
 
   /* Couleur d'accent, corrigee si elle manque de contraste sur le fond. */
@@ -318,7 +321,6 @@ static unsigned int fade(unsigned int color, float f);
 static int read_file(const char *path, unsigned char *buf, int max);
 static void log_line(const char *msg);
 static vita2d_texture *ico_get(int id);
-static const char *theme_file[THEME_COUNT] = {"sombre", "clair", "nexa", "braise", "foret", "noel"}; /* nom des images de fond */
 static void wall_free(void) {
   if (wall_tex) {
     vita2d_wait_rendering_done();
@@ -330,8 +332,8 @@ static void wall_free(void) {
 
 /* Fond d'ecran choisi : image etiree sur tout l'ecran (sans deformation), puis voile du theme. */
 static int draw_wallpaper(float a) {
-  /* theme Noel sans fond d'ecran choisi : le fond d'hiver */
-  const char *wp = wall_path[0] ? wall_path : opt_theme == XMAS_THEME ? XMAS_WALL : NULL;
+  /* theme en fichier sans fond d'ecran choisi : le fond du theme */
+  const char *wp = wall_path[0] ? wall_path : theme_default_wall();
   if (!wp) return 0;
   static char loaded_path[sizeof(wall_path)];
   if (wall_loaded && strcmp(loaded_path, wp) != 0) wall_free(); /* passage du fond d'hiver au fond choisi */
@@ -350,7 +352,7 @@ static int draw_wallpaper(float a) {
   tex_cover(wall_tex, 0, 0, SCREEN_W, 544, 0, fade(C(255, 255, 255, 255), a));
   static const int dim_a[3] = {40, 105, 165};
   fill_rect(0, 0, SCREEN_W, 544, fade(with_alpha(T.bg, dim_a[opt_wall_dim]), a));
-  if (strncmp(wp, "app0:assets/xmas/", 17) == 0) { /* fond d'hiver : la neige du bas est tres claire, assombrie pour les titres */
+  if (theme_wall_shade(wp)) { /* fond d'hiver : la neige du bas est tres claire, assombrie pour les titres */
     grad2(0, 544 * 0.45f, SCREEN_W, 544 * 0.30f, with_alpha(T.bg, 0), fade(with_alpha(T.bg, 140), a), 0);
     grad2(0, 544 * 0.75f, SCREEN_W, 544 * 0.25f + 1, fade(with_alpha(T.bg, 140), a), fade(with_alpha(T.bg, 179), a), 0);
   }
@@ -361,7 +363,7 @@ static int draw_wallpaper(float a) {
  * dessine (fondu entre l'ecran de demarrage et le menu). */
 static void draw_bg_layer(float a) {
   if (draw_wallpaper(a)) return;
-  if (theme_bg_idx != opt_theme) { /* image de fond du theme : <nom>.jpg ou .png */
+  if (theme_bg_idx != opt_theme && opt_theme < BUILTIN_THEMES) { /* image de fond du theme : <nom>.jpg ou .png */
     if (theme_bg) {
       vita2d_wait_rendering_done();
       vita2d_free_texture(theme_bg);
@@ -381,7 +383,7 @@ static void draw_bg_layer(float a) {
     snprintf(ml, sizeof(ml), "theme %s : image de fond %s", theme_file[opt_theme], theme_bg ? "chargee" : "absente");
     log_line(ml);
   }
-  if (theme_bg) {
+  if (theme_bg && theme_bg_idx == opt_theme) {
     float sx = (float)SCREEN_W / vita2d_texture_get_width(theme_bg), sy = 544.0f / vita2d_texture_get_height(theme_bg);
     vita2d_draw_texture_tint_scale(theme_bg, 0, 0, sx, sy, fade(C(255, 255, 255, 255), a));
     return;

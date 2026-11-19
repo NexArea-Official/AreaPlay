@@ -1,4 +1,6 @@
 #include <psp2/appmgr.h>
+#include <psp2/avconfig.h>
+#include <psp2/registrymgr.h>
 #include <psp2/audioout.h>
 #include <psp2/ctrl.h>
 #include <psp2/io/dirent.h>
@@ -22,6 +24,7 @@
 #include <strings.h>
 #include <time.h>
 #include <zlib.h>
+#include <curl/curl.h>
 
 #define C(r, g, b, a) RGBA8(r, g, b, a)
 #define LEN(a) ((int)(sizeof(a) / sizeof((a)[0])))
@@ -34,7 +37,9 @@
 #define VF_DATA_NAME "AreaPlay" /* dossier ux0:data/<nom> (sans espace) */
 #endif
 #define VF_EDITION "VITA EDITION" /* affiche seulement sur l'ecran de chargement */
-#define VF_VERSION_NUM "1.0" /* numero : garder en phase avec build.cmd et CMakeLists.txt */
+#ifndef VF_VERSION_NUM /* une version de test peut le changer (AP_TEST_VERSION dans CMake) */
+#define VF_VERSION_NUM "1.1" /* numero : garder en phase avec build.cmd et CMakeLists.txt */
+#endif
 #define VF_VERSION VF_APP_NAME " " VF_VERSION_NUM
 
 /* ======================================================================
@@ -104,7 +109,8 @@
 enum {
   SR_BACKDROP, SR_GLOSS, SR_THEME, SR_ACCENT, SR_VIEW, SR_SHOW_ID, SR_HIDDEN, SR_SCAN,
   SR_DELETE, SR_SORT, SR_DOWNLOAD, SR_SYS_MODE, SR_WALL, SR_WALL_DIM, SR_MSAA, SR_FPS, SR_BD_ICON, SR_SOUND, SR_EMU, SR_REGION, SR_LANG,
-  SR_SNOW, SR_NET_STATE, SR_NET_IP, SR_NET_TEST, SR_SPLASH_BG, SETTINGS_N
+  SR_SNOW, SR_NET_STATE, SR_NET_IP, SR_NET_TEST, SR_SPLASH_BG,
+  SR_RETURN, SR_UPD_AUTO, SR_UPD, SR_UPD_INSTALL, SR_NEWS, SR_TRANSFER, SETTINGS_N
 };
 
 enum { ST_REG = 0, ST_SEMI = 1 };
@@ -115,9 +121,19 @@ enum { VIEW_TILE = 0, VIEW_GRID = 1, VIEW_LIST = 2, VIEW_CATALOG = 3, VIEW_COUNT
  *  dans l'ordre : c'est toujours un seul programme, compile en une fois.
  *  Ne compile pas ces fichiers separement.
  * ====================================================================== */
+/* Reglages > Systeme (enregistres dans settings.txt) */
+static int opt_return;        /* revenir dans Area Play apres un jeu (plugin areaplay_return) */
+static int opt_upd_check = 1; /* chercher une mise a jour au demarrage */
+static int opt_upd_install;   /* installer automatiquement la mise a jour trouvee */
+static void upd_status_text(char *out, int n);
+static char upd_ver[16];       /* vf_maj.c : version en ligne et ses nouveautes (fenetre de confirmation) */
+static char upd_notes[8][160]; /* nouveautes de la version en ligne (fenetre Nouveautes) */
+static int upd_notes_n;
+static void return_check(void);
+static void return_toggle(void);
 #include "parties/vf_donnees.c"
 #include "parties/vf_dessin.c"
-#include "parties/vf_noel.c"
+#include "parties/vf_themes.c"
 #include "parties/vf_sauvegarde.c"
 #include "parties/vf_outils.c"
 #include "parties/vf_textures.c"
@@ -133,30 +149,13 @@ enum { VIEW_TILE = 0, VIEW_GRID = 1, VIEW_LIST = 2, VIEW_CATALOG = 3, VIEW_COUNT
 #include "parties/vf_reseau.c"
 #include "parties/vf_sons.c"
 #include "parties/vf_modales.c"
+#include "parties/vf_maj.c"
+#include "parties/vf_rapide.c"
+#include "parties/vf_transfert.c"
 /* ======================================================================
  *  Programme principal
  * ====================================================================== */
 
-/* Saison de Noel (1er decembre - 6 janvier) : propose une fois le theme Noel ; s'il a ete pris comme ca,
- * l'ancien theme (et son accent) revient tout seul apres la saison. */
-static void xmas_check(void) {
-  int year = 0;
-  if (xmas_season(&year)) {
-    if (opt_theme == XMAS_THEME || xmas_asked == year) return;
-    xmas_asked = year;
-    settings_save();
-    conf_kind = 4;
-    conf_open = 1;
-  } else if (opt_theme == XMAS_THEME && xmas_prev > 0) {
-    int p = xmas_prev - 1;
-    xmas_prev = 0;
-    opt_theme = p / 100 < (int)THEME_COUNT ? p / 100 : 0;
-    opt_accent = p % 100 < (int)ACCENT_COUNT ? p % 100 : 0;
-    settings_save();
-    snprintf(toast_text, sizeof(toast_text), "%s", L("Fin des fêtes : ton thème habituel est revenu"));
-    toast_time = 4.0f;
-  }
-}
 
 static void reset_focus(void) {
   memset(focus, 0, sizeof(focus));
@@ -286,8 +285,9 @@ int main(void) {
   custom_load();
   load_custom_systems();
   load_collections();
+  theme_init();  /* themes en fichiers (Noel, saisons...) et theme choisi : avant le fond d'ecran (fonds du theme) */
   wall_load_setting();
-  xmas_check(); /* theme Noel propose en saison, ancien theme rendu apres */
+  xmas_check(); /* theme de fete propose en saison, ancien theme rendu apres */
   apply_theme(); /* le fond d'ecran change l'opacite du fond dynamique */
   nameset_load(&sys_set, SYS_DIR);
 
@@ -327,6 +327,9 @@ int main(void) {
   preload_first_images();
 
   for (int i = 0; i < (int)SYSTEM_COUNT; ++i) load_system_icon(&systems[i]);
+  return_check();               /* retour apres un jeu : plugin present ? */
+  tool_start(); /* Area Play Updater : installe ou mis a jour en arriere-plan */
+  if (opt_upd_check) upd_check_start(1); /* recherche de mise a jour en arriere-plan, 3 s plus tard */
   if (scan_error < 0 && app_n == 0) {
     snprintf(toast_text, sizeof(toast_text), L("Accès à ux0:app refusé (0x%08X) : mode unsafe requis"),
              (unsigned)scan_error);
@@ -387,7 +390,7 @@ int main(void) {
       unsigned int dirs = pad_dirs | stick_dirs;
       unsigned int dnew = dirs & ~prev_dirs;
       int modal = picker_open || menu_open || hid_open || conf_open || sm_open || kb_open || info_open || dl_open ||
-                  wp_open || ct_open || cm_open || em_open || alt_open;
+                  wp_open || ct_open || cm_open || em_open || alt_open || qm_open || nv_open || tf_open;
       int rep_ok = modal || g_zone == ZONE_CONTENT; /* pas de repetition dans le menu de gauche */
       pressed = (pressed & ~(SCE_CTRL_UP | SCE_CTRL_DOWN | SCE_CTRL_LEFT | SCE_CTRL_RIGHT)) | dnew;
       for (int k = 0; k < 4; ++k) {
@@ -465,6 +468,7 @@ int main(void) {
     int want_info = 0;
     int want_quit = 0;
     dl_poll();
+    upd_poll(dt);
     alt_poll();
 
     /* ---- Ecran tactile : toucher = choisir / valider, glisser = faire defiler ---- */
@@ -474,7 +478,7 @@ int main(void) {
       static unsigned int q_dir;
       static int q_n;
       int other_modal = picker_open || menu_open || hid_open || conf_open || sm_open || kb_open || dl_open ||
-                        wp_open || ct_open || cm_open || em_open || alt_open;
+                        wp_open || ct_open || cm_open || em_open || alt_open || qm_open || nv_open || tf_open || upd_screen_on();
       int mode = 1; /* 1 = horizontal, 2 = vertical, 3 = les deux */
       float stepH = 80.0f, stepV = 40.0f;
       if (info_open) mode = 0;
@@ -563,7 +567,7 @@ int main(void) {
           /* fin du geste sur la barre de lettres */
         } else if (!t_moved) {
           if (t_time < 0.7f) {
-            if (info_open) {
+            if (info_open || nv_open) {
               pressed |= SCE_CTRL_CIRCLE;
             } else if (kb_open) { /* clavier tactile : touches, croix du champ, resultats, retour */
               int key = -1;
@@ -593,6 +597,7 @@ int main(void) {
                 int ty2 = hits[found].type, ix = hits[found].idx;
                 int was_content = g_zone == ZONE_CONTENT;
                 if (ty2 == H_SEARCH) search_open(&page);
+                if (ty2 == H_UPD) upd_card_touch(&pressed); /* carte de mise a jour, ou son icone repliee */
                 if (ty2 == H_NET) { /* barres du Wi-Fi : Reglages > Reseau */
                   page = PG_SETTINGS;
                   set_group = SG_NET;
@@ -664,11 +669,56 @@ int main(void) {
    (unsigned)info_open * 127u + (unsigned)conf_open * 131u + (unsigned)rail_quit * 137u +                   \
    (unsigned)cur_system * 139u + (unsigned)cur_coll * 149u + (unsigned)em_sel * 151u + (unsigned)em_open * 157u + \
    (unsigned)alt_sel * 163u + (unsigned)kb_focus * 167u + (unsigned)kb_res_sel * 173u + (unsigned)kb_page * 179u + \
-   (unsigned)kb_cur * 181u)
+   (unsigned)kb_cur * 181u + (unsigned)qm_open * 191u + (unsigned)qm_sel * 193u + (unsigned)upd_card * 197u + (unsigned)nv_open * 199u + (unsigned)nv_top * 211u + (unsigned)tf_open * 223u)
     unsigned ui_before = UI_STATE(), keys_in = pressed;
 
+    /* ---- START maintenu : menu rapide (si le bouton PS ne l'ouvre pas) ; START bref : comme avant ---- */
+    int start_tap = 0;
+    {
+      static float start_hold;
+      static int start_long, start_blocked;
+      int other = picker_open || menu_open || hid_open || conf_open || sm_open || kb_open || info_open || dl_open ||
+                  wp_open || ct_open || cm_open || em_open || alt_open || nv_open || tf_open;
+      if ((pressed & SCE_CTRL_START) && (other || qm_open)) start_blocked = 1; /* START pour une fenetre : pas d'action */
+      if (pad.buttons & SCE_CTRL_START) {
+        start_hold += dt;
+        if (start_hold >= 0.6f && !start_long && !other && !qm_open) {
+          start_long = 1;
+          qm_toggle();
+        }
+      } else {
+        if (start_hold > 0.0f && !start_long && !start_blocked) start_tap = 1;
+        start_hold = 0.0f;
+        start_long = 0;
+        start_blocked = 0;
+      }
+    }
+
+    /* ---- Ecran de mise a jour : il prend toutes les touches (O annule le telechargement) ---- */
+    if (upd_screen_on()) {
+      if ((pressed & SCE_CTRL_CIRCLE) && upd_state == UPD_DOWNLOADING) upd_cancel = 1;
+      pressed = 0;
+    }
+    /* ---- Carte de mise a jour (en haut a droite, sans fenetre ouverte) : X et O sont pour elle ---- */
+    if (upd_card == 1 && upd_card_has() && (pressed & (SCE_CTRL_CROSS | SCE_CTRL_CIRCLE)) &&
+        !(picker_open || menu_open || hid_open || conf_open || sm_open || kb_open || info_open || dl_open || wp_open ||
+          ct_open || cm_open || em_open || alt_open || qm_open || nv_open || tf_open)) {
+      upd_card_key(pressed);
+      pressed &= ~(SCE_CTRL_CROSS | SCE_CTRL_CIRCLE);
+    }
+
     /* ---- Fenetres modales : elles prennent toutes les touches ---- */
-    if (picker_open) {
+    if (tf_open) {
+      tf_input(pressed);
+      pressed = 0;
+    } else if (nv_open) {
+      nv_input(pressed);
+      pressed = 0;
+    } else if (qm_open) {
+      if (qm_input(pressed & ~SCE_CTRL_START)) want_quit = 1; /* Retour a la LiveArea */
+      if (pressed & SCE_CTRL_START) qm_open = 0;
+      pressed = 0;
+    } else if (picker_open) {
       if (pressed & SCE_CTRL_UP) picker_move(pick_sel - 1);
       if (pressed & SCE_CTRL_DOWN) picker_move(pick_sel + 1);
       if (pressed & SCE_CTRL_LTRIGGER) picker_move(pick_sel - 7);
@@ -730,7 +780,13 @@ int main(void) {
       if (pressed & SCE_CTRL_CIRCLE) menu_open = 0;
       pressed &= SCE_CTRL_START;
     } else if (dl_open) {
-      if (pressed & SCE_CTRL_CIRCLE) dl_cancel = 1;
+      if (pressed & SCE_CTRL_CIRCLE) { /* Annuler : la fenetre se ferme tout de suite ; le telechargement
+                                       * s'arrete en arriere-plan (avant : fenetre bloquee jusqu'a la fin de l'image en cours) */
+        dl_cancel = 1;
+        dl_open = 0;
+        snprintf(toast_text, sizeof(toast_text), "%s", L("Téléchargement annulé"));
+        toast_time = 2.5f;
+      }
       pressed &= SCE_CTRL_START;
     } else if (info_open) {
       if (pressed & (SCE_CTRL_CIRCLE | SCE_CTRL_TRIANGLE)) info_open = 0;
@@ -925,13 +981,15 @@ int main(void) {
       if (pressed & SCE_CTRL_CIRCLE) hid_open = 0;
       pressed &= SCE_CTRL_START;
     } else if (conf_open) {
-      if ((pressed & SCE_CTRL_CROSS) && conf_kind == 4) { /* passer au theme Noel pour la saison */
+      if ((pressed & SCE_CTRL_CROSS) && conf_kind == 6) { /* installer le plugin de retour, puis redemarrer */
         conf_open = 0;
-        xmas_prev = opt_theme * 100 + opt_accent + 1;
-        opt_theme = XMAS_THEME;
-        if (themes[XMAS_THEME].accent >= 0) opt_accent = themes[XMAS_THEME].accent;
-        apply_theme();
-        settings_save();
+        return_install_confirmed();
+      } else if ((pressed & SCE_CTRL_CROSS) && conf_kind == 5) { /* installer la mise a jour */
+        conf_open = 0;
+        upd_install_start();
+      } else if ((pressed & SCE_CTRL_CROSS) && conf_kind == 4) { /* passer au theme de fete pour la saison */
+        conf_open = 0;
+        theme_accept(conf_arg);
       } else if ((pressed & SCE_CTRL_CROSS) && conf_kind == 1) {
         conf_open = 0;
         want_quit = 1; /* quitter (seulement par "Quitter" du menu de gauche : START ne quitte plus) */
@@ -1049,7 +1107,8 @@ int main(void) {
       setting_row = set_row_at(set_group, set_sel);
       int is_action = setting_row == SR_WALL || setting_row == SR_DOWNLOAD || setting_row == SR_DELETE ||
                       setting_row == SR_SCAN || setting_row == SR_HIDDEN || setting_row == SR_EMU ||
-                      setting_row == SR_NET_STATE || setting_row == SR_NET_IP || setting_row == SR_NET_TEST;
+                      setting_row == SR_NET_STATE || setting_row == SR_NET_IP || setting_row == SR_NET_TEST ||
+                      setting_row == SR_UPD || setting_row == SR_NEWS || setting_row == SR_TRANSFER;
       if (left && !is_action) change_setting(setting_row, -1);
       if (right || cross) {
         if (setting_row == SR_WALL) {
@@ -1065,6 +1124,20 @@ int main(void) {
           em_open_win();
         } else if (setting_row == SR_NET_TEST) {
           net_test_start();
+        } else if (setting_row == SR_TRANSFER) {
+          tf_start();
+        } else if (setting_row == SR_NEWS) {
+          nv_open_win();
+        } else if (setting_row == SR_UPD) {
+          if (upd_state == UPD_FAILED && upd_ver_cmp(upd_ver, VF_VERSION_NUM) > 0) upd_state = UPD_AVAILABLE;
+          if (upd_state == UPD_INSTALLED) {
+            upd_silent = 0; /* installee en silence : redemarrer maintenant */
+          } else if (upd_state == UPD_AVAILABLE) {
+            conf_kind = 5;
+            conf_open = 1;
+          } else {
+            upd_check_start(0);
+          }
         } else if (setting_row == SR_NET_STATE || setting_row == SR_NET_IP) {
           /* information seulement */
         } else if (setting_row == SR_HIDDEN) {
@@ -1225,7 +1298,7 @@ int main(void) {
     }
     if (pressed & SCE_CTRL_TRIANGLE) want_info = 1;
     /* START sur la tuile d'un systeme ajoute : le retirer (apres confirmation) */
-    if ((pressed & SCE_CTRL_START) && page == PG_GAMES && games_level == 0 && g_zone == ZONE_CONTENT &&
+    if (start_tap && page == PG_GAMES && games_level == 0 && g_zone == ZONE_CONTENT && /* START bref (relache) */
         selected < (int)SYSTEM_COUNT && sys_move_si < 0 && !conf_open && !menu_open && !picker_open && !sm_open &&
         !kb_open && !hid_open && !ct_open && !cm_open && !em_open && !alt_open && !info_open && !dl_open && !wp_open) {
       int si = sys_order[selected];
@@ -1416,7 +1489,7 @@ int main(void) {
       if (shown || prev_shown) draw_backdrop_overlay();
     }
 
-    if (xmas_on() && opt_snow) snow_fall(dt); /* theme Noel : derriere les menus et les cartes */
+    snow_fall(dt); /* animation du theme en fichier (si activee) et son premier plan : derriere les menus et les cartes */
 
     /* ================= Barre de menu du haut (verre depoli) ================= */
     grad2(RAIL_W, 0, SCREEN_W - RAIL_W, BAR_H, with_alpha(T.bar, 215), with_alpha(T.bar, 150), 0);
@@ -1545,7 +1618,7 @@ int main(void) {
         static const int rail_ico[7] = {ICO_M_HOME, ICO_M_GAMES, ICO_M_HB, ICO_M_SETTINGS, ICO_M_FAV, ICO_M_COLL, ICO_M_SEARCH};
         unsigned int ic = active ? T.acc_text : T.muted;
         int xk = !xmas_on() ? -1 : pg == PG_HOME ? 0 : pg == PG_COLL ? 1 : pg == PG_HB ? 2 : -1;
-        if (xk >= 0 && xmas_icon(xk, 29, cy, 20.0f, ic)) { /* theme Noel : sapin, cadeau, flocon */
+        if (xk >= 0 && xmas_icon(xk, 29, cy, 20.0f, ic)) { /* theme en fichier : ses icones (Noel : sapin, cadeau, flocon) */
         } else if (draw_ico_file(rail_ico[pg], 29, cy, 20.0f, ic)) {
         } else if (pg == PG_FAV) {
           draw_heart_ex(29, cy, 19, ic, 1);
@@ -1572,10 +1645,8 @@ int main(void) {
       draw_set_icon(ICO_QUIT, 29, qy + 20, qf ? T.acc_text : T.muted); /* quitter.png, sinon symbole marche/arret */
       draw_text(qf ? ST_SEMI : ST_REG, 43, qy + 26, FS_BODY, qf ? T.text : T.text_soft, "Quitter");
     }
-    if (xmas_on()) { /* theme Noel : houx en haut a droite et en bas a gauche du menu */
-      holly_at(96, 46, 60, 1, -12, 1.0f);
-      holly_at(-10, 416, 58, 0, 18, 1.0f);
-    }
+    holly_kind(1, 96, 46, 60, 1, -12, 1.0f); /* decoration du theme (Noel : houx) en haut a droite et en bas a gauche du menu */
+    holly_kind(3, -10, 416, 58, 0, 18, 1.0f);
 
     /* ================= Contenu des pages ================= */
     if (page == PG_SETTINGS) {
@@ -1657,6 +1728,7 @@ int main(void) {
     if (conf_open) draw_confirm();
     if (picker_open) draw_picker();
     if (wp_open) draw_wp_picker();
+    if (qm_open) draw_quick();
 
     /* ================= Toast (retour visuel des touches) ================= */
     if (toast_time > 0.0f) {
@@ -1738,6 +1810,16 @@ int main(void) {
       }
     }
   footer_end:
+    upd_card_draw(dt, g_intro > 0.0f || qm_open || menu_open || picker_open || hid_open || conf_open || sm_open ||
+                          dl_open || wp_open || ct_open || cm_open || em_open || alt_open || info_open || kb_open || nv_open || tf_open);
+    if (qm_open || menu_open || picker_open || hid_open || conf_open || sm_open || dl_open || wp_open || ct_open ||
+        cm_open || em_open || alt_open) /* fenetre ouverte : le pied de page passe sous le voile, comme le reste */
+      fill_rect(0, FOOTER_Y, SCREEN_W, 544 - FOOTER_Y, with_alpha(T.bg, 200));
+
+    tool_poll();
+    if (nv_open) nv_draw(); /* Nouveautes : par-dessus le pied de page */
+    if (tf_open) tf_draw(); /* Transfert Wi-Fi */
+    upd_screen_draw(dt); /* mise a jour en cours : l'ecran de demarrage par-dessus tout */
 
     if (g_intro > 0.0f) { /* l'ecran de demarrage s'efface en fondu et laisse apparaitre le menu */
       float ia = g_intro * g_intro * (3.0f - 2.0f * g_intro); /* courbe douce */
@@ -1752,17 +1834,18 @@ int main(void) {
       prev_frame_us = now_us;
       if (raw > 0.0f && raw < 1.0f) fps_avg = fps_avg * 0.92f + (1.0f / raw) * 0.08f;
       cpu_avg = cpu_avg * 0.92f + cpu * 0.08f;
-      char ft[48];
-      snprintf(ft, sizeof(ft), "%2.0f FPS  %4.1f ms%s", fps_avg, cpu_avg, msaa_active ? "  AA" : "");
-      int fw = text_w(ST_SEMI, FS_SMALL, ft) + 20; /* sous la batterie, hors de la barre du haut */
+      char fps_txt[48];
+      snprintf(fps_txt, sizeof(fps_txt), "%2.0f FPS  %4.1f ms%s", fps_avg, cpu_avg, msaa_active ? "  AA" : "");
+      int fw = text_w(ST_SEMI, FS_SMALL, fps_txt) + 20; /* sous la batterie, hors de la barre du haut */
       round_rect(CONTENT_R - fw, BAR_H + 8, fw, 26, 13, C(0, 0, 0, 170));
       draw_text_center(ST_SEMI, CONTENT_R - fw / 2, BAR_H + 27, FS_SMALL,
-                       fps_avg >= 55.0f ? C(120, 230, 140, 255) : fps_avg >= 40.0f ? C(245, 205, 60, 255) : C(240, 90, 90, 255), ft);
+                       fps_avg >= 55.0f ? C(120, 230, 140, 255) : fps_avg >= 40.0f ? C(245, 205, 60, 255) : C(240, 90, 90, 255), fps_txt);
     }
 
     vita2d_end_drawing();
     vita2d_swap_buffers();
-    if (g_intro <= 0.0f && splash_bg_tex) splash_bg_free(); /* ecran de demarrage parti : image liberee */
+    /* ecran de demarrage parti : image liberee (pas pendant l ecran de mise a jour : sinon rechargee a chaque image) */
+    if (g_intro <= 0.0f && splash_bg_tex && !upd_screen_on()) splash_bg_free();
   }
 
   picker_free_preview();

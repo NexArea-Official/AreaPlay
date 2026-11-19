@@ -5,26 +5,29 @@
 
 static int hidden_count(void);
 
-#define SET_GROUPS 5
+#define SET_GROUPS 6
 #define SG_NET 3   /* Reseau : etat, adresse IP, test de connexion */
-#define SG_ABOUT 4 /* A propos : une page de texte, sans reglage */
+#define SG_SYS 4   /* Systeme : retour apres un jeu, mises a jour */
+#define SG_ABOUT 5 /* A propos : une page de texte, sans reglage */
 static int set_group = -1, set_sel = 0; /* -1 = menu des reglages, 0..4 = sous-menu */
 static const int set_rows[SET_GROUPS][9] = {
     {SR_LANG, SR_VIEW, SR_SYS_MODE, SR_SHOW_ID, SR_HIDDEN, SR_SORT, SR_SOUND, SR_FPS, SR_MSAA},
     {SR_THEME, SR_SNOW, SR_ACCENT, SR_WALL, SR_WALL_DIM, SR_SPLASH_BG, SR_BACKDROP, SR_BD_ICON, SR_GLOSS},
     {SR_SCAN, SR_EMU, SR_DOWNLOAD, SR_REGION, SR_DELETE, -1, -1, -1, -1},
-    {SR_NET_STATE, SR_NET_IP, SR_NET_TEST, -1, -1, -1, -1, -1, -1},
+    {SR_NET_STATE, SR_NET_IP, SR_NET_TEST, SR_TRANSFER, -1, -1, -1, -1, -1},
+    {SR_UPD, SR_NEWS, SR_UPD_AUTO, SR_UPD_INSTALL, SR_RETURN, -1, -1, -1, -1}, /* le dernier : plugin areaplay_return */
     {-1, -1, -1, -1, -1, -1, -1, -1, -1}};
-static const int set_rows_n[SET_GROUPS] = {9, 8, 5, 3, 0};
-static const char *set_group_names[SET_GROUPS] = {"Affichage", "Thème", "Bibliothèque", "Réseau", "À propos"};
+static const int set_rows_n[SET_GROUPS] = {9, 8, 5, 4, 5, 0};
+static const char *set_group_names[SET_GROUPS] = {"Affichage", "Thème", "Bibliothèque", "Réseau", "Système", "À propos"};
 static const char *set_group_desc[SET_GROUPS] = {"Langue, vue des jeux, tuiles, identifiant, jeux masqués, tri, performances",
                                                  "Thème, couleur d'accent, fond d'écran, fond dynamique, reflets",
                                                  "Scanner, émulateurs (RetroArch), jaquettes et fonds, supprimer",
-                                                 "État, adresse IP, test de connexion",
+                                                 "État, adresse IP, test de connexion, transfert Wi-Fi",
+                                                 "Mises à jour, nouveautés, retour après un jeu",
                                                  "Version, crédits, licences"};
 
 /* Lignes affichees d'un groupe : « Neige qui tombe » seulement avec le theme Noel. */
-static int set_row_visible(int r) { return r != SR_SNOW || xmas_on(); }
+static int set_row_visible(int r) { return r != SR_SNOW || theme_has_fx(); }
 static int set_count(int g) {
   int n = 0;
   for (int k = 0; k < set_rows_n[g]; ++k) n += set_row_visible(set_rows[g][k]);
@@ -40,7 +43,7 @@ static int set_row_at(int g, int k) {
 static int net_bars = -1; /* barres du Wi-Fi (0 a 4), -1 hors connexion */
 static void net_state_text(char *out, int n);
 static void net_ip_text(char *out, int n);
-static char net_test_msg[64];
+static char net_test_msg[96];
 
 /* Petite icone Wi-Fi : nb barres pleines sur 4, centree sur (cx, cy). */
 static void wifi_bars(float cx, float cy, int nb, unsigned int c) {
@@ -55,7 +58,7 @@ static void draw_about(float pa) {
   float x = CONTENT_X + g_ox, y = 98, w = 640, h = 372;
   round_card(x, y, w, h, 14, with_alpha(T.card, 225), T.card_border, pa);
   draw_text(ST_SEMI, (int)x + 28, (int)y + 44, FS_SECTION, fade(T.text, pa), VF_VERSION);
-  draw_text(ST_REG, (int)x + 28, (int)y + 70, FS_SMALL, fade(T.muted, pa), "Hub de jeux pour PS Vita");
+  draw_text(ST_REG, (int)x + 28, (int)y + 70, FS_SMALL, fade(T.muted, pa), "Launcher de jeux pour PS Vita");
   /* sur deux lignes au besoin : marge de 28 a droite comme a gauche */
   draw_wrapped(ST_REG, (int)x + 28, (int)y + 104, FS_BODY, (int)w - 56, 2, 24, fade(T.text_soft, pa),
                "Conçu, dessiné et testé par moi sur PS Vita, développé avec l'aide d'une IA.");
@@ -63,13 +66,14 @@ static void draw_about(float pa) {
   draw_text(ST_SEMI, (int)x + 28, (int)y + 178, FS_BODY, fade(T.text, pa), "Crédits");
   static const char *credits[] = {
       "VitaSDK et vita2d (licence MIT)",
-      "libpng, zlib, libjpeg (Independent JPEG Group), bzip2",
+      "libpng, zlib, libjpeg (IJG), bzip2, curl, OpenSSL",
       "FreeType : portions © The FreeType Project (freetype.org)",
       "Police Inter de Rasmus Andersson (SIL Open Font License 1.1)",
       "Jaquettes : hexflow-covers (jimbob4000) et libretro-thumbnails",
+      "Installation de l'Updater : VitaDeploy de SKGleba (MIT)",
       "Inspiré de RetroFlow et HexFlow (aucun code repris)"};
   for (int i = 0; i < (int)(sizeof(credits) / sizeof(credits[0])); ++i)
-    draw_text(ST_REG, (int)x + 28, (int)y + 208 + i * 28, FS_SMALL, fade(T.text_soft, pa), credits[i]);
+    draw_text(ST_REG, (int)x + 28, (int)y + 206 + i * 24, FS_SMALL, fade(T.text_soft, pa), credits[i]);
 }
 
 /* Nom affiche du fond d'ecran : nom du fichier sans extension, ou "Thème". */
@@ -79,11 +83,7 @@ static void wall_display_name(const char *path, char *out, int n) {
     return;
   }
   const char *b = strrchr(path, '/');
-  const char *bn = b ? b + 1 : path;
-  if (strncmp(bn, "hiver", 5) == 0 && bn[5] >= '1' && bn[5] <= '9' && bn[6] == '.') { /* fonds d'hiver (theme Noel) */
-    snprintf(out, n, L("Hiver (Noël) %d"), bn[5] - '0');
-    return;
-  }
+  if (theme_wall_label(path, out, n)) return; /* fonds du theme en fichier : « Noël 2 » */
   snprintf(out, n, "%s", b ? b + 1 : path);
   char *dot = strrchr(out, '.');
   if (dot && dot != out) *dot = 0;
@@ -98,7 +98,7 @@ static void draw_settings(int row) {
             set_group < 0 ? "Réglages" : set_group_names[set_group]);
   if (set_group < 0) {
     for (int g = 0; g < SET_GROUPS; ++g) {
-      float y = 100 + g * 64, w = 640, h = 54, x = CONTENT_X + g_ox;
+      float y = 98 + g * 58, w = 640, h = 52, x = CONTENT_X + g_ox; /* 6 groupes : un peu plus serres */
       int sel = g_zone == ZONE_CONTENT && g == set_sel;
       hit_add(x - g_ox, y, w, h, H_ITEM, g);
       if (sel) glow(x, y, w, h, 12, 1.0f, pa);
@@ -111,7 +111,7 @@ static void draw_settings(int row) {
       } else if (g == SG_NET)
         wifi_bars(x + 32, y + 27, 4, ic);
       else
-        draw_set_icon(g == 0 ? 4 : g == 1 ? 2 : 12, x + 32, y + 27, ic);
+        draw_set_icon(g == 0 ? 4 : g == 1 ? 2 : g == SG_SYS ? ICO_DOWNLOAD : 12, x + 32, y + 27, ic);
       draw_text(ST_SEMI, (int)x + 58, (int)y + 25, FS_BODY, fade(T.text, pa), set_group_names[g]);
       draw_text(ST_REG, (int)x + 58, (int)y + 44, FS_SMALL, fade(T.muted, pa), set_group_desc[g]);
       draw_tri(x + w - 34, y + 20, 10, 14, 1, fade(T.text_soft, pa));
@@ -135,14 +135,17 @@ static void draw_settings(int row) {
       [SR_MSAA] = "Anticrénelage (au redémarrage)", [SR_FPS] = "Compteur d'images (FPS)",
       [SR_BD_ICON] = "Fond des jeux sans image LiveArea", [SR_SOUND] = "Sons de navigation",
       [SR_EMU] = "Émulateurs", [SR_REGION] = "Région des jaquettes", [SR_LANG] = "Langue / Language",
-      [SR_SNOW] = "Neige qui tombe", [SR_SPLASH_BG] = "Fond d'écran démarrage", [SR_NET_STATE] = "État", [SR_NET_IP] = "Adresse IP", [SR_NET_TEST] = "Tester la connexion"};
+      [SR_UPD] = "Mise à jour", [SR_UPD_AUTO] = "Chercher au démarrage", [SR_UPD_INSTALL] = "Installer automatiquement", [SR_NEWS] = "Nouveautés",
+      [SR_RETURN] = "Retour dans Area Play après un jeu",
+      [SR_SNOW] = "Animation du thème", [SR_SPLASH_BG] = "Fond d'écran démarrage", [SR_NET_STATE] = "État", [SR_NET_IP] = "Adresse IP", [SR_NET_TEST] = "Tester la connexion", [SR_TRANSFER] = "Transfert Wi-Fi"};
   static const int icon_of[SETTINGS_N] = { /* icone de chaque ligne (fichiers : assets/icons/ICONES.txt) */
       [SR_BACKDROP] = ICO_BACKDROP, [SR_GLOSS] = ICO_GLOSS, [SR_THEME] = ICO_THEME, [SR_ACCENT] = ICO_ACCENT,
       [SR_VIEW] = ICO_VIEW, [SR_SHOW_ID] = ICO_ID, [SR_HIDDEN] = ICO_HIDDEN, [SR_SCAN] = ICO_SCAN,
       [SR_DELETE] = ICO_DELETE, [SR_SORT] = ICO_SORT, [SR_DOWNLOAD] = ICO_DOWNLOAD, [SR_SYS_MODE] = ICO_SYS_TILES,
       [SR_WALL] = ICO_WALL, [SR_WALL_DIM] = ICO_DIM, [SR_MSAA] = ICO_MSAA, [SR_FPS] = ICO_FPS,
       [SR_BD_ICON] = ICO_BD_ICON, [SR_SOUND] = ICO_SOUND, [SR_EMU] = ICO_SYS_TILES, [SR_REGION] = ICO_DOWNLOAD, [SR_LANG] = ICO_ID,
-      [SR_SNOW] = ICO_THEME, [SR_SPLASH_BG] = ICO_WALL, [SR_NET_STATE] = -1, [SR_NET_IP] = ICO_ID, [SR_NET_TEST] = ICO_SEARCH};
+      [SR_UPD] = ICO_DOWNLOAD, [SR_UPD_AUTO] = ICO_SCAN, [SR_UPD_INSTALL] = ICO_DOWNLOAD, [SR_NEWS] = ICO_LIBRARY, [SR_RETURN] = ICO_PLAY,
+      [SR_SNOW] = ICO_THEME, [SR_SPLASH_BG] = ICO_WALL, [SR_NET_STATE] = -1, [SR_NET_IP] = ICO_ID, [SR_NET_TEST] = ICO_SEARCH, [SR_TRANSFER] = ICO_DOWNLOAD};
   for (int kk = 0, nk = set_count(set_group); kk < nk; ++kk) {
     int i = set_row_at(set_group, kk);
     float y = 92 + kk * 36, w = 640, h = 32;
@@ -159,17 +162,24 @@ static void draw_settings(int row) {
     draw_text(ST_REG, (int)x + 58, (int)y + 23, FS_BODY, fade(T.text, pa), labels[i]);
 
     float rx = x + w - 24;
-    if (i == SR_NET_STATE || i == SR_NET_IP || i == SR_NET_TEST) { /* valeurs du reseau (texte seul) */
+    if (i == SR_NEWS || i == SR_TRANSFER) { /* fleche : ouvre la fenetre */
+      draw_tri(rx - 10, y + 17, 10, 14, 1, fade(T.text_soft, pa));
+    } else if (i == SR_UPD) { /* etat de la mise a jour */
+      char v[96];
+      upd_status_text(v, sizeof(v));
+      draw_text_right(ST_SEMI, (int)rx, (int)y + 23, FS_BODY, fade(T.text, pa), v);
+    } else if (i == SR_NET_STATE || i == SR_NET_IP || i == SR_NET_TEST) { /* valeurs du reseau (texte seul) */
       char v[64];
       if (i == SR_NET_STATE) net_state_text(v, sizeof(v));
       else if (i == SR_NET_IP) net_ip_text(v, sizeof(v));
       else snprintf(v, sizeof(v), "%s", net_test_msg[0] ? net_test_msg : L("Appuie sur X"));
       draw_text_right(ST_SEMI, (int)rx, (int)y + 23, FS_BODY, fade(i == SR_NET_TEST && !net_test_msg[0] ? T.muted : T.text, pa), v);
     } else if (i == SR_BACKDROP || i == SR_GLOSS || i == SR_SHOW_ID || i == SR_MSAA || i == SR_FPS || i == SR_BD_ICON ||
-               i == SR_SNOW || i == SR_SPLASH_BG) { /* interrupteurs */
+               i == SR_SNOW || i == SR_SPLASH_BG || i == SR_UPD_AUTO || i == SR_UPD_INSTALL || i == SR_RETURN) { /* interrupteurs */
       int on = i == SR_BACKDROP ? opt_backdrop : i == SR_GLOSS ? opt_gloss : i == SR_SHOW_ID ? opt_show_id
                : i == SR_MSAA ? opt_msaa : i == SR_FPS ? opt_fps : i == SR_SNOW ? opt_snow
-               : i == SR_SPLASH_BG ? opt_splash_bg : opt_bd_icon;
+               : i == SR_SPLASH_BG ? opt_splash_bg : i == SR_UPD_AUTO ? opt_upd_check : i == SR_UPD_INSTALL ? opt_upd_install
+               : i == SR_RETURN ? opt_return : opt_bd_icon;
       const char *txt = i == SR_BACKDROP ? (on ? "Jaquette" : "Uni") : i == SR_BD_ICON ? (on ? "Image agrandie" : "Aucun")
                         : (on ? "Oui" : "Non");
       draw_switch(rx - 46, y + 5, on, pa);
@@ -186,7 +196,7 @@ static void draw_settings(int row) {
       const char *txt = i == SR_LANG ? lang_names[lang_index()] : i == SR_REGION ? region_names[opt_region & 3]
                         : i == SR_SOUND ? sound_names[opt_sound & 3]
                         : i == SR_WALL_DIM ? wall_dim_names[opt_wall_dim] : i == SR_SYS_MODE ? sys_mode_names[opt_sys_mode]
-                        : i == SR_SORT ? sort_names[opt_sort] : i == SR_THEME ? themes[opt_theme].name
+                        : i == SR_SORT ? sort_names[opt_sort] : i == SR_THEME ? theme_name(opt_theme)
                         : i == SR_ACCENT ? accents[opt_accent].name : view_names[view_default];
       unsigned int ac = fade(T.text_soft, pa);
       draw_tri(rx - 10, y + 17, 10, 14, 1, ac);
